@@ -15,7 +15,7 @@ actor Customer
 
 note bottom of BD: Foggier idea of Customer\nformat preferencies\n\nAimed at making Fronted Dev life easier
 note top of FD: Foggier idea of ugliness\nin backend data\n\nAimed at making Customer life easier
-note top of Customer: Don't care of Backend or Frontend issues\n\nBusy making their own life easier
+note top of Customer: Don't care of Backend or Frontend issues\n\nBusy making money
 
 rectangle BackendServer {
 (file\nread) .> (structured\ndata)
