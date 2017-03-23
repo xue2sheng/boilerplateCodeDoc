@@ -2,8 +2,10 @@
 #define BOOST_TEST_MODULE UnitTest
 
 #include <string>
+#include <fstream>
 #include <boost/hana.hpp>
 #include <boost/test/unit_test.hpp>
+#include <rapidjson/rapidjson.h>
 #include <rapidjson/reader.h>
 
 #include "decoupleUserOutput.h"
@@ -14,8 +16,11 @@ namespace hana = boost::hana;
 // just logging something ( --log_level=message )
 
 struct GlobalInit {
-  GlobalInit() {}
+  GlobalInit() : argc(boost::unit_test_framework::framework::master_test_suite().argc),
+		argv(boost::unit_test_framework::framework::master_test_suite().argv){}
   ~GlobalInit() {}
+  int argc {};
+  char **argv {nullptr};
 };
 BOOST_GLOBAL_FIXTURE( GlobalInit );
 
@@ -103,5 +108,69 @@ BOOST_AUTO_TEST_CASE( test001 ) {
    Reader reader;
    StringStream ss(json);
 
-   reader.Parse(ss, handler);
+   BOOST_CHECK(kParseErrorNone == reader.Parse(ss, handler));
+}
+
+BOOST_AUTO_TEST_CASE( test002 ) {
+    BOOST_TEST_MESSAGE( "\ntest002: Processing external Json Schema file");
+
+   struct MyHandler {
+       bool Null() { BOOST_TEST_MESSAGE("Null()"); return true; }
+       bool Bool(bool b) { BOOST_TEST_MESSAGE("Bool(" << std::boolalpha << b << ")"); return true; }
+       bool Int(int i) { BOOST_TEST_MESSAGE("Int(" << i << ")"); return true; }
+       bool Uint(unsigned u) { BOOST_TEST_MESSAGE("Uint(" << u << ")"); return true; }
+       bool Int64(int64_t i) { BOOST_TEST_MESSAGE("Int64(" << i << ")"); return true; }
+       bool Uint64(uint64_t u) { BOOST_TEST_MESSAGE("Uint64(" << u << ")"); return true; }
+       bool Double(double d) { BOOST_TEST_MESSAGE("Double(" << d << ")"); return true; }
+       bool RawNumber(const char* str, rapidjson::SizeType length, bool copy) {
+	   BOOST_TEST_MESSAGE("Number(" << str << ", " << length << ", " << std::boolalpha << copy << ")");
+	   return true;
+       }
+       bool String(const char* str, rapidjson::SizeType length, bool copy) {
+	   BOOST_TEST_MESSAGE("String(" << str << ", " << length << ", " << std::boolalpha << copy << ")");
+	   return true;
+       }
+       bool StartObject() { BOOST_TEST_MESSAGE("StartObject()"); return true; }
+       bool Key(const char* str, rapidjson::SizeType length, bool copy) {
+	   BOOST_TEST_MESSAGE("Key(" << str << ", " << length << ", " << std::boolalpha << copy << ")");
+	   return true;
+       }
+       bool EndObject(rapidjson::SizeType memberCount) { BOOST_TEST_MESSAGE("EndObject(" << memberCount << ")"); return true; }
+       bool StartArray() { BOOST_TEST_MESSAGE("StartArray()"); return true; }
+       bool EndArray(rapidjson::SizeType elementCount) { BOOST_TEST_MESSAGE("EndArray(" << elementCount << ")"); return true; }
+   };
+
+   std::string filename{"schema.json"};
+   int argc =boost::unit_test::framework::master_test_suite().argc;
+   if( argc > 1) {
+	filename = std::string(boost::unit_test::framework::master_test_suite().argv[1]);
+   }
+   BOOST_TEST_MESSAGE( "current binary=" << boost::unit_test::framework::master_test_suite().argv[0] );
+   BOOST_TEST_MESSAGE( "schema.json=" << filename );
+   std::ifstream json{filename};
+   if( json.is_open() ) {
+
+	// temporary var
+	std::string contents;
+
+	// allocate all the memory up front
+	json.seekg(0, std::ios::end);
+	contents.reserve(json.tellg());
+	json.seekg(0, std::ios::beg);
+
+	// read data
+	contents.assign((std::istreambuf_iterator<char>(json)), std::istreambuf_iterator<char>());
+	rapidjson::StringStream ss{contents.c_str()};
+
+	MyHandler handler;
+	rapidjson::Reader reader;
+
+	BOOST_CHECK(rapidjson::kParseErrorNone == reader.Parse(ss, handler));
+
+   } else {
+	BOOST_TEST_MESSAGE("Unable to open " << filename);
+	BOOST_CHECK(false);
+   }
+
+
 }
