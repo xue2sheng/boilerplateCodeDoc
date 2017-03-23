@@ -6,7 +6,7 @@ project(${LOCAL_CMAKE_PROJECT_NAME} NONE)
 ### Specific configuration ###
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 message(STATUS "${LOCAL_CMAKE_PROJECT_NAME} cmake module path: ${CMAKE_MODULE_PATH}")
-find_package(DecoupleUseOutputRules)
+find_package(DecoupleUserOutputRules)
 
 ### Code ###
 add_subdirectory("src")

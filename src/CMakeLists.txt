@@ -1,7 +1,7 @@
 # this is the "object library" target: compiles the sources only once
 file(GLOB SOURCES *.cpp)
 set(LIB_OBJECT_NAME "${LOCAL_CMAKE_PROJECT_NAME}_object")
-file(GLOB EXTRA_SOURCES *.h ../include/*.h) # making happy Qt-Creator project tab
+file(GLOB_RECURSE EXTRA_SOURCES *.h* ../include/*.h*) # making happy Qt-Creator project tab
 include_directories(../include)
 add_library(${LIB_OBJECT_NAME} OBJECT ${SOURCES} ${EXTRA_SOURCES})
 

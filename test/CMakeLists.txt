@@ -7,6 +7,7 @@ find_package( Boost 1.54.0 REQUIRED COMPONENTS unit_test_framework )
 if(Boost_FOUND)
 
  file(GLOB SOURCES_MAIN main.cpp)
+ include_directories(../include)
  link_directories(${LIB_PATH} ${STATIC_LIB_PATH})
  add_executable(${TEST_NAME} ${SOURCES_MAIN})
  add_dependencies(${TEST_NAME} ${LIB_STATIC_NAME})
