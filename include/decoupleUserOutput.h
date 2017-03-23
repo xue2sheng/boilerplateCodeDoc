@@ -10,11 +10,6 @@
 #ifndef DECOUPLEUSEROUTPUT_H
 #define DECOUPLEUSEROUTPUT_H
 
-#include <string>
-
-struct Fish { std::string name; };
-struct Cat  { std::string name; };
-struct Dog  { std::string name; };
 
 #endif // DECOUPLEUSEROUTPUT_H
 
