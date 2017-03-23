@@ -140,7 +140,9 @@ BOOST_AUTO_TEST_CASE( test002 ) {
        bool EndArray(rapidjson::SizeType elementCount) { BOOST_TEST_MESSAGE("EndArray(" << elementCount << ")"); return true; }
    };
 
+   // taken for granted that CMake copied default json schema file in the very directory where this test binary is generated
    std::string filename{"schema.json"};
+
    int argc =boost::unit_test::framework::master_test_suite().argc;
    if( argc > 1) {
 	filename = std::string(boost::unit_test::framework::master_test_suite().argv[1]);
