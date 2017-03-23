@@ -1,0 +1,164 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Example of Json Schema with several levels",
+  "description": "version 0.0.1",
+  "type": "object",
+  "properties": {
+       "test": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1,
+            "default": 0
+        },
+       "id": {
+          "type": "string"
+        },
+        "imp": {
+            "type": "array",
+            "items": {
+                "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "native": {
+                    "type": "object",
+                    "properties" : {
+                            "request": {
+                                "type": "string"
+                            },
+                            "ver": {
+                                "type": "string",
+                                "default": "1.1"
+                            },
+                            "api": {
+                                "type": "array",
+                                "items": {
+                                    "type": "integer"
+                                }
+                            }
+                     },
+                     "required": [
+                            "request"
+                     ]
+                },
+                "pmp": {
+                    "type": "object",
+                    "properties" : {
+                            "private_auction": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 1,
+                                "default": 0
+                            },
+                            "deals" : {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id" : {
+                                            "type": "string"
+                                        },
+                                        "bidfloor": {
+                                            "type": "number",
+                                            "minimum": 0.0,
+                                            "default": 0.0
+                                        },
+                                        "bidfloorcur": {
+                                            "type": "string",
+                                            "enum": [ "USD" ]
+                                        },
+                                        "at": {
+                                            "type": "integer"
+                                        },
+                                        "wseat": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "wadomain": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "ext": {
+                                        }
+                                    },
+                                    "required": [
+                                        "id"
+                                    ]
+                                }
+                            }
+                     }
+                },
+                "displaymanager": {
+                    "type": "string"
+                },
+                "displaymanagerver": {
+                    "type": "string"
+                },
+                "instl": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 1,
+                        "default": 0
+                },
+                "tagid": {
+                    "type": "string"
+                },
+                "bidfloor": {
+                        "type": "number",
+                        "minimum": 0.0,
+                        "default": 0.0
+                },
+                "bidfloorcur": {
+                    "type": "string",
+                    "enum": [ "USD" ]
+                },
+                "clickbrowser": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 1,
+                        "default": 0
+                },
+                "secure": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 1,
+                        "default": 0
+                },
+                "iframabuster": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                },
+                "exp": {
+                        "type": "integer"
+                },
+                "ext": {
+                        "type": "object",
+                        "properties": {
+                            "strictbannersize": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 1,
+                                "default": 0
+                            }
+                        }
+                }
+            },
+            "required": [
+                "id",
+                "native"
+            ]
+            }
+        }
+  },
+  "required": [
+    "id",
+    "imp"
+  ]
+}

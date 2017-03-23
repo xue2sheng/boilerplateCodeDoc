@@ -1,0 +1,16 @@
+/** @file version.h
+ * @brief CMAKE genarated header to store version information.
+ *
+ * Version.txt, remote git server, git branch, git hashcode, date/time and compilation host. 
+ *
+ * @remark Use 'strings' command to access to this embedded information.
+ *
+ */
+
+#ifndef @VERSION_VAR_NAME@_H
+#define @VERSION_VAR_NAME@_H
+
+static constexpr const char* @VERSION_VAR_NAME@ __attribute__((used)) /*__attribute__((section("DATA")))*/ = "@VERSION_VAR_NAME@: @DOXYGEN_PROJECT_NUMBER@";
+static constexpr const char* @VERSION_VAR_NAME@_INFO __attribute__((used)) /*__attribute__((section("DATA")))*/ = "@VERSION_VAR_NAME@_INFO: @VERSION_INFO@";
+
+#endif // @VERSION_VAR_NAME@_H
