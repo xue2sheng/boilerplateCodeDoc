@@ -84,4 +84,4 @@ FD -- (choose specific\nCSS)
 -->
 ![Json Example](/images/json.png)
 
-At the **backend** [Boost Hana](https://github.com/boostorg/hana) by [Luois Dionne](https://github.com/ldionne) and [RapidJSON](https://github.com/miloyip/rapidjson) by [Milo Yip](https://github.com/miloyip) are used to fight back all the ugliness possible and get to the **frontend** some simplify *Markdown/text* data to transform through [Pandoc](http://pandoc.org/) into waterdowned *HTML/CSS*.
+At the **backend** [Boost Hana](https://github.com/boostorg/hana) by [Luois Dionne](https://github.com/ldionne) and [RapidJSON](https://github.com/miloyip/rapidjson) by [Milo Yip](https://github.com/miloyip) are used to fight back all the ugliness possible and get to the **frontend** some simplified *Markdown/text* data to transform through [Pandoc](http://pandoc.org/) into waterdowned *HTML/CSS*.
