@@ -39,7 +39,7 @@ rectangle FrontendServer {
 (choose specific\noutput format) .> (apply chosen format)
 FD -- (choose specific\noutput format)
 }
-![Diagram](/images/diagram.png)
 @enduml
 
 -->
+![Diagram](/images/diagram.png)
