@@ -1,5 +1,4 @@
-# decoupleUserOutput
-Humble attempt to dissociate Backend generated data/schemas from friendly user Frontend formats
+# Decouple User Output
 
 <!--
 
@@ -43,3 +42,42 @@ FD -- (choose specific\noutput format)
 
 -->
 ![Diagram](/images/diagram.png)
+
+## Example: Tech Json Schema Info into User-Friendly HTML table
+
+Customer is more used to **read** HTML than hairy, lengthy *Json Schema* raw files. So we'd better to provided that expected format in order to get some **constructive feedback** from them.
+
+<!--
+
+@startuml json.png
+
+top to bottom direction
+skinparam packageStyle rectangle
+
+actor "Frontend\n...Dev..." as FD
+actor "Backend\n...Dev..." as BD
+actor Customer 
+
+rectangle BackendServer {
+(file\nread) .> (structured\ndata)
+BD -- (adding\ngeneric\nformat info)
+(structured\ndata) .> (adding\ngeneric\nformat info)
+(adding\ngeneric\nformat info) .> (MARKDOWN/TEXT)
+}
+
+cloud FileSystem {
+(Json Schema) .> (file\nread)
+}
+
+
+rectangle FrontendServer {
+(MARKDOWN/TEXT) .> (choose specific\nCSS)
+(user output\nHTML\CSS) .> Customer
+(apply chosen format) .> (user output\nHTML\CSS)
+(choose specific\nCSS) .> (apply chosen format)
+FD -- (choose specific\nCSS)
+}
+@enduml
+
+-->
+![Json Example](/images/json.png)
