@@ -11,10 +11,23 @@
 
 #include "decoupleUserOutput.h"
 
-decoupleUserOutput::ParseErrorCode decoupleUserOutput::Parse(std::string filename, decoupleUserOutput::JsonHandler& handler) {
+static inline std::string to_string(const decoupleUserOutput::ParseErrorCode& error) {
+	    switch(error) {
+		default: return "Unknown ParseErrorCode";
+		case decoupleUserOutput::ParseErrorCode::OK: return "OK";
+		case decoupleUserOutput::ParseErrorCode::EMPTY_FILENAME: return "EMPTY_FILENAME";
+		case decoupleUserOutput::ParseErrorCode::UNEXPECTED_ERROR_PROCESSING_SCHEMA_JSON_FILE: return "UNEXPECTED_ERROR_PROCESSING_SCHEMA_JSON_FILE";
+		case decoupleUserOutput::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON: return "ERROR_PARSING_SCHEMA_JSON";
+		case decoupleUserOutput::ParseErrorCode::UNABLE_OPEN_FILE: return "UNABLE_OPEN_FILE";
+	    }
+}
+
+bool decoupleUserOutput::Parse(std::string filename, decoupleUserOutput::JsonHandler& handler) {
 
 	if( filename.empty() ) {
-		return decoupleUserOutput::ParseErrorCode::EMPTY_FILENAME;
+		handler.error = decoupleUserOutput::ParseErrorCode::EMPTY_FILENAME;
+		handler.message = to_string(handler.error);
+		return true;
 	}
 
 	try {
@@ -35,17 +48,27 @@ decoupleUserOutput::ParseErrorCode decoupleUserOutput::Parse(std::string filenam
 		     rapidjson::StringStream ss{contents.c_str()};
 
 		     rapidjson::Reader reader;
-		     if (rapidjson::kParseErrorNone != reader.Parse(ss, handler)) {
-			     return decoupleUserOutput::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
+		     rapidjson::ParseResult result = reader.Parse(ss, handler);
+		     if (rapidjson::kParseErrorNone != result) {
+
+			     handler.error = decoupleUserOutput::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
+			     handler.message = to_string(handler.error);
+			     return false;
 		     }
 
 		} else {
-			return decoupleUserOutput::ParseErrorCode::UNABLE_OPEN_FILE;
+			handler.error = decoupleUserOutput::ParseErrorCode::UNABLE_OPEN_FILE;
+			handler.message = to_string(handler.error);
+			return false;
 		}
 
 	} catch(...) {
-		return decoupleUserOutput::ParseErrorCode::UNEXPECTED_ERROR_PROCESSING_SCHEMA_JSON_FILE;
+		handler.error = decoupleUserOutput::ParseErrorCode::UNEXPECTED_ERROR_PROCESSING_SCHEMA_JSON_FILE;
+		handler.message = to_string(handler.error);
+		return false;
 	}
 
-	return decoupleUserOutput::ParseErrorCode::OK;
+	handler.error = decoupleUserOutput::ParseErrorCode::OK;
+	handler.message = to_string(handler.error);
+	return true;
 }

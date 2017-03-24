@@ -158,7 +158,7 @@ BOOST_AUTO_TEST_CASE( test002 ) {
    BOOST_TEST_MESSAGE( "schema.json=" << filename );
 
    DerivedHandler handler {};
-   decouple::ParseErrorCode result = decouple::Parse(filename, handler);
-   BOOST_TEST_MESSAGE( decouple::to_String(result) );
-   BOOST_CHECK( decouple::ParseErrorCode::OK == result );
+   bool result = decouple::Parse(filename, handler);
+   BOOST_TEST_MESSAGE( handler.message );
+   BOOST_CHECK( result );
 }

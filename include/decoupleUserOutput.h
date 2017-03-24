@@ -17,9 +17,22 @@
 /// @remark an alias might be defined by users as: namespace decouple = decoupleUserOutput;
 namespace decoupleUserOutput {
 
+    /// @brief Specific error code.
+    enum class ParseErrorCode: unsigned { OK = 0,
+					  EMPTY_FILENAME,
+					  UNEXPECTED_ERROR_PROCESSING_SCHEMA_JSON_FILE,
+					  ERROR_PARSING_SCHEMA_JSON,
+					  UNABLE_OPEN_FILE
+					};
+
+
     /// @brief Basic interface to process Json file similar to SAX xml way.
     struct JsonHandler {
       virtual ~JsonHandler() = default;
+      ParseErrorCode error {ParseErrorCode::OK};
+      std::string message {};
+
+      //rapidjosn callbacks
       virtual bool Null() = 0;
       virtual bool Bool(bool b) = 0;
       virtual bool Int(int i) = 0;
@@ -36,33 +49,11 @@ namespace decoupleUserOutput {
       virtual bool EndArray(/*rapidjson::SizeType*/ unsigned elementCount) = 0;
     };
 
-    /// @brief Specific error code.
-    enum class ParseErrorCode: unsigned { OK = 0,
-					  EMPTY_FILENAME,
-					  UNEXPECTED_ERROR_PROCESSING_SCHEMA_JSON_FILE,
-					  ERROR_PARSING_SCHEMA_JSON,
-					  UNABLE_OPEN_FILE
-					};
-
-    /// @brief Translate into string the error code.
-    /// @param [in] error to be transformed.
-    /// @remark For dubugging.
-    static inline std::string to_String(const ParseErrorCode& error) {
-	    switch(error) {
-		default: return "Unknown ParseErrorCode";
-		case ParseErrorCode::OK: return "OK";
-		case ParseErrorCode::EMPTY_FILENAME: return "EMPTY_FILENAME";
-		case ParseErrorCode::UNEXPECTED_ERROR_PROCESSING_SCHEMA_JSON_FILE: return "UNEXPECTED_ERROR_PROCESSING_SCHEMA_JSON_FILE";
-		case ParseErrorCode::ERROR_PARSING_SCHEMA_JSON: return "ERROR_PARSING_SCHEMA_JSON";
-		case ParseErrorCode::UNABLE_OPEN_FILE: return "UNABLE_OPEN_FILE";
-	    }
-    }
-
     /// @brief Process external json file.
     /// @param [in] filename to process.
     /// @param [in,out] handler to be used.
-    /// @return error code if any.
-    ParseErrorCode Parse(std::string filename, JsonHandler& handler);
+    /// @return if success returns true, otherwise false.
+    bool Parse(std::string filename, JsonHandler& handler);
 };
 
 
