@@ -5,6 +5,7 @@
 #include <fstream>
 #include <rapidjson/rapidjson.h>
 #include <rapidjson/reader.h>
+#include <rapidjson/error/en.h>
 
 // automatically generate version info
 #include "version.h"
@@ -49,10 +50,12 @@ bool decoupleUserOutput::Parse(std::string filename, decoupleUserOutput::JsonHan
 
 		     rapidjson::Reader reader;
 		     rapidjson::ParseResult result = reader.Parse(ss, handler);
-		     if (rapidjson::kParseErrorNone != result) {
-
+		     if (rapidjson::kParseErrorNone != result && rapidjson::kParseErrorDocumentEmpty != result) {
 			     handler.error = decoupleUserOutput::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
 			     handler.message = to_string(handler.error);
+			     handler.message += " [";
+			     handler.message += std::string(rapidjson::GetParseError_En(result.Code())) + " : " + std::to_string(result.Offset());
+			     handler.message += "]";
 			     return false;
 		     }
 
