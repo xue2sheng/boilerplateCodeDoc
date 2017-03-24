@@ -30,7 +30,7 @@ namespace decoupleUserOutput {
     struct JsonHandler {
       virtual ~JsonHandler() = default;
       ParseErrorCode error {ParseErrorCode::OK};
-      std::string message {};
+      std::string message {}; // error message
 
       //rapidjosn callbacks
       virtual bool Null() = 0;
@@ -54,8 +54,25 @@ namespace decoupleUserOutput {
     /// @param [in,out] handler to be used.
     /// @return if success returns true, otherwise false.
     bool Parse(std::string filename, JsonHandler& handler);
-};
 
+    /// @brief Specific handler to generate Markdown tables for HTML pandoc final transformation.
+    struct JsonSchema2GithubMarkdown final: public JsonHandler {
+      bool Null() override;
+      bool Bool(bool b) override;
+      bool Int(int i) override;
+      bool Uint(unsigned u) override;
+      bool Int64(int64_t i) override;
+      bool Uint64(uint64_t u) override;
+      bool Double(double d) override;
+      bool RawNumber(const char* str, /*rapidjson::SizeType*/ unsigned length, bool copy) override;
+      bool String(const char* str, /*rapidjson::SizeType*/ unsigned length, bool copy) override;
+      bool StartObject() override;
+      bool Key(const char* str, /*rapidjson::SizeType*/ unsigned length, bool copy) override;
+      bool EndObject(/*rapidjson::SizeType*/ unsigned memberCount) override;
+      bool StartArray() override;
+      bool EndArray(/*rapidjson::SizeType*/ unsigned elementCount) override;
+    };
 
-#endif // DECOUPLEUSEROUTPUT_H
+} // namespace
 
+#endif // header

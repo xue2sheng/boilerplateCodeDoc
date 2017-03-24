@@ -12,7 +12,7 @@
 
 #include "decoupleUserOutput.h"
 
-static inline std::string to_string(const decoupleUserOutput::ParseErrorCode& error) {
+static std::string to_string(const decoupleUserOutput::ParseErrorCode& error) {
 	    switch(error) {
 		default: return "Unknown ParseErrorCode";
 		case decoupleUserOutput::ParseErrorCode::OK: return "OK";
@@ -23,7 +23,8 @@ static inline std::string to_string(const decoupleUserOutput::ParseErrorCode& er
 	    }
 }
 
-bool decoupleUserOutput::Parse(std::string filename, decoupleUserOutput::JsonHandler& handler) {
+bool decoupleUserOutput::Parse(std::string filename, decoupleUserOutput::JsonHandler& handler)
+{
 
 	if( filename.empty() ) {
 		handler.error = decoupleUserOutput::ParseErrorCode::EMPTY_FILENAME;
@@ -48,8 +49,7 @@ bool decoupleUserOutput::Parse(std::string filename, decoupleUserOutput::JsonHan
 		     contents.assign((std::istreambuf_iterator<char>(json)), std::istreambuf_iterator<char>());
 		     rapidjson::StringStream ss{contents.c_str()};
 
-		     rapidjson::Reader reader;
-		     rapidjson::ParseResult result = reader.Parse(ss, handler);
+		     rapidjson::ParseResult result = rapidjson::Reader{}.Parse(ss, handler);
 		     if (rapidjson::kParseErrorNone != result && rapidjson::kParseErrorDocumentEmpty != result) {
 			     handler.error = decoupleUserOutput::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
 			     handler.message = to_string(handler.error);
@@ -75,3 +75,18 @@ bool decoupleUserOutput::Parse(std::string filename, decoupleUserOutput::JsonHan
 	handler.message = to_string(handler.error);
 	return true;
 }
+
+bool decoupleUserOutput::JsonSchema2GithubMarkdown::Null() { return true; }
+bool decoupleUserOutput::JsonSchema2GithubMarkdown::Bool(bool b) { return true; }
+bool decoupleUserOutput::JsonSchema2GithubMarkdown::Int(int i) { return true; }
+bool decoupleUserOutput::JsonSchema2GithubMarkdown::Uint(unsigned u) { return true; }
+bool decoupleUserOutput::JsonSchema2GithubMarkdown::Int64(int64_t i) { return true; }
+bool decoupleUserOutput::JsonSchema2GithubMarkdown::Uint64(uint64_t u) { return true; }
+bool decoupleUserOutput::JsonSchema2GithubMarkdown::Double(double d) { return true; }
+bool decoupleUserOutput::JsonSchema2GithubMarkdown::RawNumber(const char* str, rapidjson::SizeType length, bool copy) { return true; }
+bool decoupleUserOutput::JsonSchema2GithubMarkdown::String(const char* str, rapidjson::SizeType length, bool copy) { return true; }
+bool decoupleUserOutput::JsonSchema2GithubMarkdown::StartObject() { return true; }
+bool decoupleUserOutput::JsonSchema2GithubMarkdown::Key(const char* str, rapidjson::SizeType length, bool copy) { return true; }
+bool decoupleUserOutput::JsonSchema2GithubMarkdown::EndObject(rapidjson::SizeType memberCount) { return true; }
+bool decoupleUserOutput::JsonSchema2GithubMarkdown::StartArray() { return true; }
+bool decoupleUserOutput::JsonSchema2GithubMarkdown::EndArray(rapidjson::SizeType elementCount) { return true; }

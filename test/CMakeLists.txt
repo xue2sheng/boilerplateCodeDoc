@@ -10,9 +10,10 @@ if(Boost_FOUND)
  add_custom_target(${TEST_NAME}_data ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/../json/ ${CMAKE_CURRENT_BINARY_DIR} DEPENDS ${LIB_STATIC_NAME})
 
  file(GLOB SOURCES_MAIN main.cpp)
+ file(GLOB EXTRA_MAIN ../json/*.json) # make QtCreator happy
  include_directories(../include)
  link_directories(${LIB_PATH} ${STATIC_LIB_PATH})
- add_executable(${TEST_NAME} ${SOURCES_MAIN})
+ add_executable(${TEST_NAME} ${SOURCES_MAIN} ${EXTRA_MAIN})
  add_dependencies(${TEST_NAME} ${LIB_STATIC_NAME} ${TEST_NAME}_data)
  target_link_libraries(${TEST_NAME} DecoupleUserOutput_static ${LIB_STATIC_NAME} ${STATIC_LIB_LINKER} ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
  add_test(UnitTest ${TEST_NAME})

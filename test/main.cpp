@@ -162,3 +162,28 @@ BOOST_AUTO_TEST_CASE( test002 ) {
    BOOST_TEST_MESSAGE( handler.message );
    BOOST_CHECK( result );
 }
+
+BOOST_AUTO_TEST_CASE( test003 ) {
+   BOOST_TEST_MESSAGE( "\ntest003: Transform external Json Schema into Markdown");
+
+   // taken for granted that CMake copied default json schema file in the very directory where this test binary is generated
+   std::string filename{"schema.json"};
+   std::string binary{boost::unit_test::framework::master_test_suite().argv[0]};
+   size_t found = binary.find_last_of("/\\");
+   if( found > 0 ) {
+	BOOST_TEST_MESSAGE( "found=" << found);
+	filename = binary.substr(0,found+1) + filename;
+   }
+
+   int argc =boost::unit_test::framework::master_test_suite().argc;
+   if( argc > 1) {
+	filename = std::string(boost::unit_test::framework::master_test_suite().argv[1]);
+   }
+   BOOST_TEST_MESSAGE( "current binary=" << binary );
+   BOOST_TEST_MESSAGE( "schema.json=" << filename );
+
+   decouple::JsonSchema2GithubMarkdown handler {};
+   bool result = decouple::Parse(filename, handler);
+   BOOST_TEST_MESSAGE( handler.message );
+   BOOST_CHECK( result );
+}
