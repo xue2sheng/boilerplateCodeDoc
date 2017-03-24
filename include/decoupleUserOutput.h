@@ -11,6 +11,7 @@
 #define DECOUPLEUSEROUTPUT_H
 
 #include <string>
+#include <vector>
 
 /// @brief Decouple User Output for the simple example.
 /// @remark long name on propose in order to avoid name collisions.
@@ -71,6 +72,10 @@ namespace decoupleUserOutput {
       bool EndObject(/*rapidjson::SizeType*/ unsigned memberCount) override;
       bool StartArray() override;
       bool EndArray(/*rapidjson::SizeType*/ unsigned elementCount) override;
+
+      // looking for objects --> tables
+      std::vector<std::string> table;
+      std::string to_markdown() const;
     };
 
 } // namespace

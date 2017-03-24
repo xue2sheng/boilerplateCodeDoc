@@ -3,6 +3,7 @@
 #include <cassert>
 #include <string>
 #include <fstream>
+#include <set>
 #include <rapidjson/rapidjson.h>
 #include <rapidjson/reader.h>
 #include <rapidjson/error/en.h>
@@ -12,7 +13,7 @@
 
 #include "decoupleUserOutput.h"
 
-static std::string to_string(const decoupleUserOutput::ParseErrorCode& error) {
+static inline std::string to_string(const decoupleUserOutput::ParseErrorCode& error) {
 	    switch(error) {
 		default: return "Unknown ParseErrorCode";
 		case decoupleUserOutput::ParseErrorCode::OK: return "OK";
@@ -49,7 +50,8 @@ bool decoupleUserOutput::Parse(std::string filename, decoupleUserOutput::JsonHan
 		     contents.assign((std::istreambuf_iterator<char>(json)), std::istreambuf_iterator<char>());
 		     rapidjson::StringStream ss{contents.c_str()};
 
-		     rapidjson::ParseResult result = rapidjson::Reader{}.Parse(ss, handler);
+		     rapidjson::Reader reader;
+		     rapidjson::ParseResult result = reader.Parse(ss, handler);
 		     if (rapidjson::kParseErrorNone != result && rapidjson::kParseErrorDocumentEmpty != result) {
 			     handler.error = decoupleUserOutput::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
 			     handler.message = to_string(handler.error);
@@ -85,8 +87,31 @@ bool decoupleUserOutput::JsonSchema2GithubMarkdown::Uint64(uint64_t u) { return 
 bool decoupleUserOutput::JsonSchema2GithubMarkdown::Double(double d) { return true; }
 bool decoupleUserOutput::JsonSchema2GithubMarkdown::RawNumber(const char* str, rapidjson::SizeType length, bool copy) { return true; }
 bool decoupleUserOutput::JsonSchema2GithubMarkdown::String(const char* str, rapidjson::SizeType length, bool copy) { return true; }
-bool decoupleUserOutput::JsonSchema2GithubMarkdown::StartObject() { return true; }
-bool decoupleUserOutput::JsonSchema2GithubMarkdown::Key(const char* str, rapidjson::SizeType length, bool copy) { return true; }
-bool decoupleUserOutput::JsonSchema2GithubMarkdown::EndObject(rapidjson::SizeType memberCount) { return true; }
 bool decoupleUserOutput::JsonSchema2GithubMarkdown::StartArray() { return true; }
 bool decoupleUserOutput::JsonSchema2GithubMarkdown::EndArray(rapidjson::SizeType elementCount) { return true; }
+bool decoupleUserOutput::JsonSchema2GithubMarkdown::StartObject() { return true; }
+bool decoupleUserOutput::JsonSchema2GithubMarkdown::EndObject(rapidjson::SizeType memberCount) { return true; }
+
+static inline bool reservedWord(const std::string& key) {
+	static std::set<std::string> reserved {"type", "minimum", "items","properties","default","maximum","enum","required","description"};
+	return reserved.count(key) != 0;
+}
+
+std::string decoupleUserOutput::JsonSchema2GithubMarkdown::to_markdown() const
+{
+	std::string result;
+	for(const auto& t : table) { result += t + "\n"; }
+	return result;
+}
+
+bool decoupleUserOutput::JsonSchema2GithubMarkdown::Key(const char* str, rapidjson::SizeType length, bool copy)
+{
+	std::string key(str);
+
+	if(not reservedWord(key) ) {
+		table.emplace_back(std::move(key));
+	}
+	return true;
+}
+
+

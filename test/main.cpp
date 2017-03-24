@@ -1,4 +1,4 @@
-#define BOOST_TEST_MAIN
+﻿#define BOOST_TEST_MAIN
 #define BOOST_TEST_MODULE UnitTest
 
 #include <string>
@@ -184,6 +184,6 @@ BOOST_AUTO_TEST_CASE( test003 ) {
 
    decouple::JsonSchema2GithubMarkdown handler {};
    bool result = decouple::Parse(filename, handler);
-   BOOST_TEST_MESSAGE( handler.message );
+   BOOST_TEST_MESSAGE( handler.message << "\n\n" << handler.to_markdown());
    BOOST_CHECK( result );
 }
