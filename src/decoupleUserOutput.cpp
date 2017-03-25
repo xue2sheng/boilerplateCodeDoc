@@ -4,6 +4,7 @@
 #include <rapidjson/rapidjson.h>
 #include <rapidjson/document.h>
 #include <rapidjson/error/en.h>
+#include <rapidjson/pointer.h>
 
 // automatically generate version info
 #include "version.h"
@@ -77,5 +78,11 @@ bool decoupleUserOutput::Parse(std::string filename, decoupleUserOutput::JsonFil
 bool decoupleUserOutput::JsonSchema2HTML::operator()(void* document_ptr)
 {
     auto& document = reinterpret_cast<rapidjson::Document&>(document_ptr);
+    //rapidjson::Value* root = rapidjson::Pointer("#").Get(document);
+    if( not document.HasMember("$chema")) {
+        error = decoupleUserOutput::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
+        message = "Invalid json schema file";
+        return false;
+    }
     return true;
 }

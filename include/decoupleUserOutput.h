@@ -23,7 +23,8 @@ namespace decoupleUserOutput {
 					  EMPTY_FILENAME,
 					  UNEXPECTED_ERROR_PROCESSING_SCHEMA_JSON_FILE,
 					  ERROR_PARSING_SCHEMA_JSON,
-					  UNABLE_OPEN_FILE
+                      UNABLE_OPEN_FILE,
+                      ERROR_FILTERING_DOCUMENT
 					};
 
 
