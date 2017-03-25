@@ -113,58 +113,7 @@ BOOST_AUTO_TEST_CASE( test001 ) {
 }
 
 BOOST_AUTO_TEST_CASE( test002 ) {
-    BOOST_TEST_MESSAGE( "\ntest002: Processing external Json Schema file");
-
-   struct DerivedHandler : public decouple::JsonHandler {
-       bool Null() override { BOOST_TEST_MESSAGE("Null()"); return true; }
-       bool Bool(bool b) override { BOOST_TEST_MESSAGE("Bool(" << std::boolalpha << b << ")"); return true; }
-       bool Int(int i) override { BOOST_TEST_MESSAGE("Int(" << i << ")"); return true; }
-       bool Uint(unsigned u) override { BOOST_TEST_MESSAGE("Uint(" << u << ")"); return true; }
-       bool Int64(int64_t i) override { BOOST_TEST_MESSAGE("Int64(" << i << ")"); return true; }
-       bool Uint64(uint64_t u) override { BOOST_TEST_MESSAGE("Uint64(" << u << ")"); return true; }
-       bool Double(double d) override { BOOST_TEST_MESSAGE("Double(" << d << ")"); return true; }
-       bool RawNumber(const char* str, rapidjson::SizeType length, bool copy) override {
-	   BOOST_TEST_MESSAGE("Number(" << str << ", " << length << ", " << std::boolalpha << copy << ")");
-	   return true;
-       }
-       bool String(const char* str, rapidjson::SizeType length, bool copy) override {
-	   BOOST_TEST_MESSAGE("String(" << str << ", " << length << ", " << std::boolalpha << copy << ")");
-	   return true;
-       }
-       bool StartObject() override { BOOST_TEST_MESSAGE("StartObject()"); return true; }
-       bool Key(const char* str, rapidjson::SizeType length, bool copy) {
-	   BOOST_TEST_MESSAGE("Key(" << str << ", " << length << ", " << std::boolalpha << copy << ")");
-	   return true;
-       }
-       bool EndObject(rapidjson::SizeType memberCount) override { BOOST_TEST_MESSAGE("EndObject(" << memberCount << ")"); return true; }
-       bool StartArray() override { BOOST_TEST_MESSAGE("StartArray()"); return true; }
-       bool EndArray(rapidjson::SizeType elementCount) override { BOOST_TEST_MESSAGE("EndArray(" << elementCount << ")"); return true; }
-   };
-
-   // taken for granted that CMake copied default json schema file in the very directory where this test binary is generated
-   std::string filename{"schema.json"};
-   std::string binary{boost::unit_test::framework::master_test_suite().argv[0]};
-   size_t found = binary.find_last_of("/\\");
-   if( found > 0 ) {
-        BOOST_TEST_MESSAGE( "found=" << found);
-        filename = binary.substr(0,found+1) + filename;
-   }
-
-   int argc =boost::unit_test::framework::master_test_suite().argc;
-   if( argc > 1) {
-	filename = std::string(boost::unit_test::framework::master_test_suite().argv[1]);
-   }
-   BOOST_TEST_MESSAGE( "current binary=" << binary );
-   BOOST_TEST_MESSAGE( "schema.json=" << filename );
-
-   DerivedHandler handler {};
-   bool result = decouple::Parse(filename, handler);
-   BOOST_TEST_MESSAGE( handler.message );
-   BOOST_CHECK( result );
-}
-
-BOOST_AUTO_TEST_CASE( test003 ) {
-   BOOST_TEST_MESSAGE( "\ntest003: Transform external Json Schema into Markdown");
+   BOOST_TEST_MESSAGE( "\ntest002: Transform external Json Schema");
 
    // taken for granted that CMake copied default json schema file in the very directory where this test binary is generated
    std::string filename{"schema.json"};
@@ -182,8 +131,8 @@ BOOST_AUTO_TEST_CASE( test003 ) {
    BOOST_TEST_MESSAGE( "current binary=" << binary );
    BOOST_TEST_MESSAGE( "schema.json=" << filename );
 
-   decouple::JsonSchema2GithubMarkdown handler {};
+   decouple::JsonSchema2HTML handler {};
    bool result = decouple::Parse(filename, handler);
-   BOOST_TEST_MESSAGE( handler.message << "\n\n" << handler.to_markdown());
+   BOOST_TEST_MESSAGE( handler.message << "\n\n" << handler.filtered);
    BOOST_CHECK( result );
 }
