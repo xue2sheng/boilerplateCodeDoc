@@ -129,7 +129,9 @@ struct Property {
 	bool required {false};
 	std::string name {};
 	std::string type {};
-	Property(bool req, std::string nam, std::string typ) : required{req}, name{std::move(nam)}, type{std::move(typ)} {}
+	std::string description {};
+	Property(bool req, std::string nam, std::string typ, std::string des)
+		: required{req}, name{std::move(nam)}, type{std::move(typ)}, description{std::move(des)} {}
 };
 using Properties = std::map<std::string, Property>;
 
@@ -144,6 +146,31 @@ static Required collectRequired(auto&& i)
 	}
 	return result;
 }
+
+static bool getPointer(auto&& document, const std::string& element, const std::string& prefix, const std::string& name, const std::string& suffix, std::string& result)
+{
+  // Do nothing if there's nothing to do
+  std::string temp {element + prefix + name + suffix};
+  if( not rapidjson::Pointer(temp.c_str()).IsValid() ) { return false; }
+  rapidjson::Value* pointer {rapidjson::Pointer(temp.c_str()).Get(document)};
+  if( not pointer ) { return false; }
+  if( pointer->IsNull() ) { return false; }
+  if( not pointer->IsString() ) { return false; }
+  result = pointer->GetString();
+}
+
+  std::string type {};
+  if( pointer->HasMember("type") ) {
+	std::string temp2 {temp};
+	temp2 += "/type";
+	if( not rapidjson::Pointer(temp2.c_str()).IsValid() ) { continue; }
+	rapidjson::Value* pointer2 {rapidjson::Pointer(temp2.c_str()).Get(document)};
+	if( not pointer2 ) { continue; }
+	if( pointer2->IsNull() ) { continue; }
+	type = pointer2->GetString();
+  }
+}
+
 static Properties collectProperties(auto&& document, std::string element, auto&& i)
 {
 	Properties result {};
@@ -168,12 +195,22 @@ static Properties collectProperties(auto&& document, std::string element, auto&&
 			rapidjson::Value* pointer2 {rapidjson::Pointer(temp2.c_str()).Get(document)};
 			if( not pointer2 ) { continue; }
 			if( pointer2->IsNull() ) { continue; }
+			type = pointer2->GetString();
+		  }
 
+		  std::string type {};
+		  if( pointer->HasMember("type") ) {
+			std::string temp2 {temp};
+			temp2 += "/type";
+			if( not rapidjson::Pointer(temp2.c_str()).IsValid() ) { continue; }
+			rapidjson::Value* pointer2 {rapidjson::Pointer(temp2.c_str()).Get(document)};
+			if( not pointer2 ) { continue; }
+			if( pointer2->IsNull() ) { continue; }
 			type = pointer2->GetString();
 		  }
 
 
-		  result.emplace(std::make_pair(name, std::move(Property{false, name, type})));
+		  result.emplace(std::make_pair(name, std::move(Property{false, name, type, description})));
 		}
 	}
 	return result;
@@ -205,9 +242,7 @@ static std::set<std::string> ignoreSchemaRoot {"description", "title", "$schema"
 
 static auto html = [](const OneOf& oneOf, const Required& required, const Properties& properties, std::string& filtered)
 {
-    for(const auto& o : oneOf) { filtered += "oneOf: " + std::to_string(o.size()) + "\n"; }
-    for(const auto& r : required) { filtered += "required: " + r + "\n"; }
-    for(const auto& p : properties) { filtered += "propierties: " + p.second.name
+    for(const auto& p : properties) { filtered += p.second.name
 			    + (p.second.required?"<required>":"")
 			    + "{" + p.second.type + "}\n"; }
 };
