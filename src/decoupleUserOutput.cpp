@@ -22,13 +22,21 @@ static inline std::string to_string(const decoupleUserOutput::ParseErrorCode& er
 	    }
 }
 
-bool decoupleUserOutput::Parse(std::string filename, decoupleUserOutput::JsonFilter& handler)
+decoupleUserOutput::JsonSchema::~JsonSchema()
+{
+	if(document_ptr) {
+		delete reinterpret_cast<rapidjson::Document*>(document_ptr);
+		document_ptr = nullptr;
+	}
+}
+
+decoupleUserOutput::JsonSchema::JsonSchema(std::string filename)
 {
 
 	if( filename.empty() ) {
-		handler.error = decoupleUserOutput::ParseErrorCode::EMPTY_FILENAME;
-		handler.message = to_string(handler.error);
-		return true;
+		error = decoupleUserOutput::ParseErrorCode::EMPTY_FILENAME;
+		message = to_string(error);
+		return;
 	}
 
 	try {
@@ -47,42 +55,89 @@ bool decoupleUserOutput::Parse(std::string filename, decoupleUserOutput::JsonFil
 		     // read data
 		     contents.assign((std::istreambuf_iterator<char>(json)), std::istreambuf_iterator<char>());
 
-             // get json ready to process
-             rapidjson::Document document;
-             rapidjson::ParseResult ok = document.Parse(contents.c_str());
-             if( not ok ) {
-                 handler.error = decoupleUserOutput::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
-                 handler.message = to_string(handler.error);
-                 handler.message += " [";
-                 handler.message += std::string(rapidjson::GetParseError_En(ok.Code())) + " : " + std::to_string(ok.Offset());
-                 handler.message += "]";
-                 return false;
-             }
+		     // get json ready to process
+		     rapidjson::Document* temp = new rapidjson::Document;
+		     rapidjson::Document& document {*temp};
+		     document_ptr = reinterpret_cast<void*>(temp);
 
-            // process data
-            return handler.operator()(reinterpret_cast<void*>(&document));
+		     rapidjson::ParseResult ok = document.Parse(contents.c_str());
+		     if( not ok ) {
+			 error = decoupleUserOutput::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
+			 message = to_string(error);
+			 message += " [";
+			 message += std::string(rapidjson::GetParseError_En(ok.Code())) + " : " + std::to_string(ok.Offset());
+			 message += "]";
+			 return;
+		     }
 
-        } else {
-			handler.error = decoupleUserOutput::ParseErrorCode::UNABLE_OPEN_FILE;
-			handler.message = to_string(handler.error);
-			return false;
+		     if( document.IsNull() ) {
+			     error = decoupleUserOutput::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
+			     message = "Json Schema document shouldn't be NULL";
+			     return;
+		     }
+
+		     if(document.IsObject()) {
+			     if( not document.HasMember("$schema") ) {
+				error = decoupleUserOutput::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
+				message = "Missing expected $schema root object";
+				return;
+			     }
+			      if( not document.HasMember("title") ) {
+				error = decoupleUserOutput::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
+				message = "Missing expected schema title";
+				return;
+			     }
+
+			      if( not document.HasMember("description") ) {
+				error = decoupleUserOutput::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
+				message = "Missing expected schema description";
+				return;
+			     }
+
+			      title = document["title"].GetString();
+			      description = document["description"].GetString();
+
+		     } else {
+			error = decoupleUserOutput::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
+			message = "Root element of a schema json should be an object";
+		     }
+
+		} else {
+			error = decoupleUserOutput::ParseErrorCode::UNABLE_OPEN_FILE;
+			message = to_string(error);
 		}
 
 	} catch(...) {
-		handler.error = decoupleUserOutput::ParseErrorCode::UNEXPECTED_ERROR_PROCESSING_SCHEMA_JSON_FILE;
-		handler.message = to_string(handler.error);
-		return false;
+		error = decoupleUserOutput::ParseErrorCode::UNEXPECTED_ERROR_PROCESSING_SCHEMA_JSON_FILE;
+		message = to_string(error);
 	}
 }
 
-bool decoupleUserOutput::JsonSchema2HTML::operator()(void* document_ptr)
+bool decoupleUserOutput::JsonSchema2HTML::operator()(const decoupleUserOutput::JsonSchema& jsonSchema)
 {
-    auto& document = reinterpret_cast<rapidjson::Document&>(document_ptr);
-    //rapidjson::Value* root = rapidjson::Pointer("#").Get(document);
-    if( not document.HasMember("$chema")) {
-        error = decoupleUserOutput::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
-        message = "Invalid json schema file";
-        return false;
+    if( not jsonSchema.document_ptr ) {
+	error = decoupleUserOutput::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
+	message = "Empty document pointer";
+	return false;
     }
+
+    rapidjson::Document& document {*reinterpret_cast<rapidjson::Document*>(jsonSchema.document_ptr)};
+    try {
+	    if(document.IsNull()) {
+		error = decoupleUserOutput::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
+		message = "Root element shouldn't be NULL";
+		return false;
+	    }
+
+	    for(rapidjson::Value::ConstMemberIterator i = document.MemberBegin(); i != document.MemberEnd(); ++i) {
+		filtered += std::string(i->name.GetString()) + "\n";
+	    }
+
+    } catch(...) {
+	error = decoupleUserOutput::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
+	message = "Unexpected exception";
+	return false;
+    }
+
     return true;
 }

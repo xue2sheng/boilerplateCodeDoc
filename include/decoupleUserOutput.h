@@ -27,28 +27,42 @@ namespace decoupleUserOutput {
                       ERROR_FILTERING_DOCUMENT
 					};
 
+    /// @brief minimum wrapper for json schemas read by rapidjson
+    struct JsonSchema {
+
+      // get rid of json schema document
+      ~JsonSchema();
+
+      /// @brief Process external json file.
+      /// @param [in] filename to process.
+      /// @return if success returns true, otherwise false.
+      explicit JsonSchema(std::string filename);
+
+      ParseErrorCode error {ParseErrorCode::OK};
+      std::string message {}; // error message
+      void* document_ptr {nullptr}; // void to avoid rapidjson dependencies
+      std::string title {};
+      std::string description {};
+    };
+
 
     /// @brief Basic interface to process Json file similar.
-    struct JsonFilter {
-      virtual ~JsonFilter() = default;
+    struct JsonSchemaFilter {
+      virtual ~JsonSchemaFilter() = default;
       ParseErrorCode error {ParseErrorCode::OK};
       std::string message {}; // error message
 
       //rapidjosn filter
-      virtual bool operator()(void* document = nullptr) = 0; // void to avoid rapidjson dependencies
+      virtual bool operator()(const JsonSchema& jsonSchema) = 0; // void to avoid rapidjson dependencies
       std::string filtered {}; // result of this filter
     };
 
-    /// @brief Process external json file.
-    /// @param [in] filename to process.
-    /// @param [in,out] handler to be used.
-    /// @return if success returns true, otherwise false.
-    bool Parse(std::string filename, JsonFilter& handler);
-
-    /// @brief Specific handler to generate HTML tables.
+     /// @brief Specific handler to generate HTML tables.
     /// @remark Style will be provided by CSS if needed.
-    struct JsonSchema2HTML final: public JsonFilter {
-      bool operator()(void* document = nullptr) override; // void to avoid rapidjson dependencies
+    struct JsonSchema2HTML final: public JsonSchemaFilter {
+      bool operator()(const JsonSchema& jsonSchema) override;
+      std::string css_id {};
+      std::string css {};
     };
 
 } // namespace

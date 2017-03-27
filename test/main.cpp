@@ -131,8 +131,9 @@ BOOST_AUTO_TEST_CASE( test002 ) {
    BOOST_TEST_MESSAGE( "current binary=" << binary );
    BOOST_TEST_MESSAGE( "schema.json=" << filename );
 
+   decouple::JsonSchema jsonSchema{filename};
    decouple::JsonSchema2HTML handler {};
-   bool result = decouple::Parse(filename, handler);
+   bool result = handler(jsonSchema);
    BOOST_TEST_MESSAGE( handler.message << "\n\n" << handler.filtered);
    BOOST_CHECK( result );
 }
