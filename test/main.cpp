@@ -113,7 +113,7 @@ BOOST_AUTO_TEST_CASE( test001 ) {
 }
 
 BOOST_AUTO_TEST_CASE( test002 ) {
-   BOOST_TEST_MESSAGE( "\ntest002: Transform external Json Schema");
+   BOOST_TEST_MESSAGE( "\ntest002: Transform external Json Schema into HTML");
 
    // taken for granted that CMake copied default json schema file in the very directory where this test binary is generated
    std::string filename{"schema.json"};
@@ -132,8 +132,9 @@ BOOST_AUTO_TEST_CASE( test002 ) {
    BOOST_TEST_MESSAGE( "schema.json=" << filename );
 
    decouple::JsonSchema jsonSchema{filename};
+   BOOST_TEST_MESSAGE( "Json Schema: " << jsonSchema.message);
    decouple::JsonSchema2HTML handler {};
    bool result = handler(jsonSchema);
-   BOOST_TEST_MESSAGE( handler.message << "\n\n" << handler.filtered);
+   BOOST_TEST_MESSAGE( "JsonSchema2HTML: " << handler.message << "\n\n" << handler.filtered);
    BOOST_CHECK( result );
 }

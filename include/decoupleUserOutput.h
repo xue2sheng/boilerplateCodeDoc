@@ -57,7 +57,7 @@ namespace decoupleUserOutput {
       std::string filtered {}; // result of this filter
     };
 
-     /// @brief Specific handler to generate HTML tables.
+    /// @brief Specific handler to generate HTML tables.
     /// @remark Style will be provided by CSS if needed.
     struct JsonSchema2HTML final: public JsonSchemaFilter {
       bool operator()(const JsonSchema& jsonSchema) override;

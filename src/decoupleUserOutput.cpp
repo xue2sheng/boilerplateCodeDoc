@@ -1,6 +1,10 @@
 #include <boost/hana.hpp>
 #include <string>
 #include <fstream>
+#include <vector>
+#include <utility>
+#include <map>
+#include <set>
 #include <rapidjson/rapidjson.h>
 #include <rapidjson/document.h>
 #include <rapidjson/error/en.h>
@@ -97,6 +101,9 @@ decoupleUserOutput::JsonSchema::JsonSchema(std::string filename)
 			      title = document["title"].GetString();
 			      description = document["description"].GetString();
 
+			      error = decoupleUserOutput::ParseErrorCode::OK;
+			      message = to_string(error);
+
 		     } else {
 			error = decoupleUserOutput::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
 			message = "Root element of a schema json should be an object";
@@ -110,6 +117,38 @@ decoupleUserOutput::JsonSchema::JsonSchema(std::string filename)
 	} catch(...) {
 		error = decoupleUserOutput::ParseErrorCode::UNEXPECTED_ERROR_PROCESSING_SCHEMA_JSON_FILE;
 		message = to_string(error);
+	}
+}
+
+static inline bool ignore(const std::string& name, const std::set<std::string>& ignoreSet) {
+	    return ignoreSet.end() !=  ignoreSet.find(name);
+}
+using Required = std::vector<std::string>;
+using OneOf = std::vector<Required>;
+struct Property {
+	bool required {false};
+	std::string name {};
+	Property(bool req, std::string nam) : required{req}, name{std::move(nam)} {}
+};
+using Properties = std::map<std::string, Property>;
+
+static OneOf collectOneOf(auto&& i) { return OneOf{}; }
+static Required collectRequired(auto&& i) { return Required{}; }
+static Properties collectProperties(auto&& i)
+{
+	Properties result {};
+	for(auto&& j = i.MemberBegin(); j != i.MemberEnd(); ++j) {
+	  std::string name{j->name.GetString()};
+	  result.emplace(std::make_pair(name, std::move(Property{false, name})));
+	}
+	return result;
+}
+static void processProperties(const OneOf& oneOf, const Required& required, Properties& propierties)
+{
+	if( oneOf.size() > 0 ) {
+
+	} else if ( required.size() > 0 ) {
+
 	}
 }
 
@@ -129,15 +168,30 @@ bool decoupleUserOutput::JsonSchema2HTML::operator()(const decoupleUserOutput::J
 		return false;
 	    }
 
-	    for(rapidjson::Value::ConstMemberIterator i = document.MemberBegin(); i != document.MemberEnd(); ++i) {
-		filtered += std::string(i->name.GetString()) + "\n";
+	    static std::set<std::string> ignoreSchemaRoot {"description", "title", "$schema", "type"};
+
+	    OneOf oneOf {};
+	    Required required {};
+	    Properties properties {};
+	    for(auto&& i = document.MemberBegin(); i != document.MemberEnd(); ++i) {
+		std::string name {i->name.GetString()};
+		if(ignore(name, ignoreSchemaRoot)) { continue; }
+		if( name == "oneOf" ) { oneOf = collectOneOf(i); }
+		if( name == "required" ) { required = collectRequired(i); }
+		if( name == "properties" ) { properties = collectProperties(document["properties"]); }
 	    }
+
+	    for(const auto& o : oneOf) { filtered += "oneOf: " + std::to_string(o.size()) + "\n"; }
+	    for(const auto& r : required) { filtered += "required: " + r + "\n"; }
+	    for(const auto& p : properties) { filtered += "propierties: " + p.second.name + "\n"; }
+
+	     error = decoupleUserOutput::ParseErrorCode::OK;
+	     message = to_string(error);
+	     return true;
 
     } catch(...) {
 	error = decoupleUserOutput::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
 	message = "Unexpected exception";
 	return false;
     }
-
-    return true;
 }
