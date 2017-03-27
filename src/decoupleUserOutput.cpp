@@ -144,13 +144,36 @@ static Required collectRequired(auto&& i)
 	}
 	return result;
 }
-static Properties collectProperties(auto&& i)
+static Properties collectProperties(auto&& document, std::string element, auto&& i)
 {
 	Properties result {};
 	if( i.IsObject() ) {
 		for(auto&& j = i.MemberBegin(); j != i.MemberEnd(); ++j) {
 		  std::string name{j->name.GetString()};
-		  result.emplace(std::make_pair(name, std::move(Property{false, name, ""})));
+
+		  // Do nothing if there's nothing to do
+		  std::string temp {element};
+		  temp += "/properties/";
+		  temp += name;
+		  if( not rapidjson::Pointer(temp.c_str()).IsValid() ) { continue; }
+		  rapidjson::Value* pointer {rapidjson::Pointer(temp.c_str()).Get(document)};
+		  if( not pointer ) { continue; }
+		  if( pointer->IsNull() ) { continue; }
+
+		  std::string type {};
+		  if( pointer->HasMember("type") ) {
+			std::string temp2 {temp};
+			temp2 += "/type";
+			if( not rapidjson::Pointer(temp2.c_str()).IsValid() ) { continue; }
+			rapidjson::Value* pointer2 {rapidjson::Pointer(temp2.c_str()).Get(document)};
+			if( not pointer2 ) { continue; }
+			if( pointer2->IsNull() ) { continue; }
+
+			type = pointer2->GetString();
+		  }
+
+
+		  result.emplace(std::make_pair(name, std::move(Property{false, name, type})));
 		}
 	}
 	return result;
@@ -184,7 +207,9 @@ static auto html = [](const OneOf& oneOf, const Required& required, const Proper
 {
     for(const auto& o : oneOf) { filtered += "oneOf: " + std::to_string(o.size()) + "\n"; }
     for(const auto& r : required) { filtered += "required: " + r + "\n"; }
-    for(const auto& p : properties) { filtered += "propierties: " + p.second.name + (p.second.required?"<required>":"") + "\n"; }
+    for(const auto& p : properties) { filtered += "propierties: " + p.second.name
+			    + (p.second.required?"<required>":"")
+			    + "{" + p.second.type + "}\n"; }
 };
 
 static void SetProperties(auto&& document, std::string element, const std::set<std::string> ignoreSet, std::string& filtered, auto lambda)
@@ -192,9 +217,10 @@ static void SetProperties(auto&& document, std::string element, const std::set<s
     OneOf oneOf {};
     Required required {};
     Properties properties {};
-    rapidjson::Value* pointer {rapidjson::Pointer(element.c_str()).Get(document)};
 
     // Do nothing if there's nothing to do
+    if( not rapidjson::Pointer(element.c_str()).IsValid() ) { return; }
+    rapidjson::Value* pointer {rapidjson::Pointer(element.c_str()).Get(document)};
     if( not pointer ) { return; }
     if( pointer->IsNull() ) { return; }
     if( not pointer->IsObject() ) { return; }
@@ -206,15 +232,15 @@ static void SetProperties(auto&& document, std::string element, const std::set<s
 	if(ignore(name, ignoreSchemaRoot)) { continue; }
 	if( name == "oneOf" ) { oneOf = collectOneOf(object["oneOf"]); }
 	if( name == "required" ) { required = collectRequired(object["required"]); }
-	if( name == "properties" ) {
-		properties = collectProperties(object["properties"]);
-	}
+	if( name == "properties" ) { properties = collectProperties(document, element, object["properties"]); }
     }
     processProperties(oneOf, required, properties);
 
     lambda(oneOf, required, properties, filtered);
 
     // recursive call
+
+
 }
 
 bool decoupleUserOutput::JsonSchema2HTML::operator()(const decoupleUserOutput::JsonSchema& jsonSchema)
@@ -233,6 +259,7 @@ bool decoupleUserOutput::JsonSchema2HTML::operator()(const decoupleUserOutput::J
 		return false;
 	    }
 
+	     //std::string element {"#/properties/imp/items/properties/native"};
 	     std::string element {"#"};
 	     SetProperties(document, element, ignoreSchemaRoot, filtered, html);
 
