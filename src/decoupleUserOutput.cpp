@@ -128,7 +128,8 @@ using OneOf = std::vector<Required>;
 struct Property {
 	bool required {false};
 	std::string name {};
-	Property(bool req, std::string nam) : required{req}, name{std::move(nam)} {}
+	std::string type {};
+	Property(bool req, std::string nam, std::string typ) : required{req}, name{std::move(nam)}, type{std::move(typ)} {}
 };
 using Properties = std::map<std::string, Property>;
 
@@ -149,7 +150,7 @@ static Properties collectProperties(auto&& i)
 	if( i.IsObject() ) {
 		for(auto&& j = i.MemberBegin(); j != i.MemberEnd(); ++j) {
 		  std::string name{j->name.GetString()};
-		  result.emplace(std::make_pair(name, std::move(Property{false, name})));
+		  result.emplace(std::make_pair(name, std::move(Property{false, name, ""})));
 		}
 	}
 	return result;
@@ -157,6 +158,14 @@ static Properties collectProperties(auto&& i)
 static void processProperties(const OneOf& oneOf, const Required& required, Properties& properties)
 {
 	if( oneOf.size() > 0 ) {
+
+		// tricky part of selecting which "oneOf" array of requirements must be applied
+		for(const auto& o : oneOf) {
+			bool allRequirementsPresent {false};
+			for(const auto& r : o) {
+// TODO: oneOf
+			}
+		}
 
 	} else if ( required.size() > 0 ) {
 		for(const auto& r : required) {
@@ -169,6 +178,45 @@ static void processProperties(const OneOf& oneOf, const Required& required, Prop
 	}
 }
 
+static std::set<std::string> ignoreSchemaRoot {"description", "title", "$schema", "type"};
+
+static auto html = [](const OneOf& oneOf, const Required& required, const Properties& properties, std::string& filtered)
+{
+    for(const auto& o : oneOf) { filtered += "oneOf: " + std::to_string(o.size()) + "\n"; }
+    for(const auto& r : required) { filtered += "required: " + r + "\n"; }
+    for(const auto& p : properties) { filtered += "propierties: " + p.second.name + (p.second.required?"<required>":"") + "\n"; }
+};
+
+static void SetProperties(auto&& document, std::string element, const std::set<std::string> ignoreSet, std::string& filtered, auto lambda)
+{
+    OneOf oneOf {};
+    Required required {};
+    Properties properties {};
+    rapidjson::Value* pointer {rapidjson::Pointer(element.c_str()).Get(document)};
+
+    // Do nothing if there's nothing to do
+    if( not pointer ) { return; }
+    if( pointer->IsNull() ) { return; }
+    if( not pointer->IsObject() ) { return; }
+
+    const rapidjson::Value::Object object {pointer->GetObject()};
+
+    for(auto&& i = object.MemberBegin(); i != object.MemberEnd(); ++i) {
+	std::string name {i->name.GetString()};
+	if(ignore(name, ignoreSchemaRoot)) { continue; }
+	if( name == "oneOf" ) { oneOf = collectOneOf(object["oneOf"]); }
+	if( name == "required" ) { required = collectRequired(object["required"]); }
+	if( name == "properties" ) {
+		properties = collectProperties(object["properties"]);
+	}
+    }
+    processProperties(oneOf, required, properties);
+
+    lambda(oneOf, required, properties, filtered);
+
+    // recursive call
+}
+
 bool decoupleUserOutput::JsonSchema2HTML::operator()(const decoupleUserOutput::JsonSchema& jsonSchema)
 {
     if( not jsonSchema.document_ptr ) {
@@ -179,29 +227,14 @@ bool decoupleUserOutput::JsonSchema2HTML::operator()(const decoupleUserOutput::J
 
     rapidjson::Document& document {*reinterpret_cast<rapidjson::Document*>(jsonSchema.document_ptr)};
     try {
-	    if(document.IsNull()) {
+	    if(document.IsNull() || not document.IsObject() ) {
 		error = decoupleUserOutput::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
 		message = "Root element shouldn't be NULL";
 		return false;
 	    }
 
-	    static std::set<std::string> ignoreSchemaRoot {"description", "title", "$schema", "type"};
-
-	    OneOf oneOf {};
-	    Required required {};
-	    Properties properties {};
-	    for(auto&& i = document.MemberBegin(); i != document.MemberEnd(); ++i) {
-		std::string name {i->name.GetString()};
-		if(ignore(name, ignoreSchemaRoot)) { continue; }
-		if( name == "oneOf" ) { oneOf = collectOneOf(document["oneOf"]); }
-		if( name == "required" ) { required = collectRequired(document["required"]); }
-		if( name == "properties" ) { properties = collectProperties(document["properties"]); }
-	    }
-	    processProperties(oneOf, required, properties);
-
-	    for(const auto& o : oneOf) { filtered += "oneOf: " + std::to_string(o.size()) + "\n"; }
-	    for(const auto& r : required) { filtered += "required: " + r + "\n"; }
-	    for(const auto& p : properties) { filtered += "propierties: " + p.second.name + (p.second.required?"<required>":"") + "\n"; }
+	     std::string element {"#"};
+	     SetProperties(document, element, ignoreSchemaRoot, filtered, html);
 
 	     error = decoupleUserOutput::ParseErrorCode::OK;
 	     message = to_string(error);
