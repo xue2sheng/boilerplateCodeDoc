@@ -133,22 +133,39 @@ struct Property {
 using Properties = std::map<std::string, Property>;
 
 static OneOf collectOneOf(auto&& i) { return OneOf{}; }
-static Required collectRequired(auto&& i) { return Required{}; }
-static Properties collectProperties(auto&& i)
+static Required collectRequired(auto&& i)
 {
-	Properties result {};
-	for(auto&& j = i.MemberBegin(); j != i.MemberEnd(); ++j) {
-	  std::string name{j->name.GetString()};
-	  result.emplace(std::make_pair(name, std::move(Property{false, name})));
+	Required result {};
+	if( i.IsArray() ) {
+		for(auto&& j = i.Begin(); j != i.End(); ++j) {
+			result.emplace_back(j->GetString());
+		}
 	}
 	return result;
 }
-static void processProperties(const OneOf& oneOf, const Required& required, Properties& propierties)
+static Properties collectProperties(auto&& i)
+{
+	Properties result {};
+	if( i.IsObject() ) {
+		for(auto&& j = i.MemberBegin(); j != i.MemberEnd(); ++j) {
+		  std::string name{j->name.GetString()};
+		  result.emplace(std::make_pair(name, std::move(Property{false, name})));
+		}
+	}
+	return result;
+}
+static void processProperties(const OneOf& oneOf, const Required& required, Properties& properties)
 {
 	if( oneOf.size() > 0 ) {
 
 	} else if ( required.size() > 0 ) {
+		for(const auto& r : required) {
+			auto found = properties.find(r);
+			if( found != properties.end() ) {
+				found->second.required = true;
+			}
 
+		}
 	}
 }
 
@@ -176,14 +193,15 @@ bool decoupleUserOutput::JsonSchema2HTML::operator()(const decoupleUserOutput::J
 	    for(auto&& i = document.MemberBegin(); i != document.MemberEnd(); ++i) {
 		std::string name {i->name.GetString()};
 		if(ignore(name, ignoreSchemaRoot)) { continue; }
-		if( name == "oneOf" ) { oneOf = collectOneOf(i); }
-		if( name == "required" ) { required = collectRequired(i); }
+		if( name == "oneOf" ) { oneOf = collectOneOf(document["oneOf"]); }
+		if( name == "required" ) { required = collectRequired(document["required"]); }
 		if( name == "properties" ) { properties = collectProperties(document["properties"]); }
 	    }
+	    processProperties(oneOf, required, properties);
 
 	    for(const auto& o : oneOf) { filtered += "oneOf: " + std::to_string(o.size()) + "\n"; }
 	    for(const auto& r : required) { filtered += "required: " + r + "\n"; }
-	    for(const auto& p : properties) { filtered += "propierties: " + p.second.name + "\n"; }
+	    for(const auto& p : properties) { filtered += "propierties: " + p.second.name + (p.second.required?"<required>":"") + "\n"; }
 
 	     error = decoupleUserOutput::ParseErrorCode::OK;
 	     message = to_string(error);
