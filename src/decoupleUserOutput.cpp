@@ -154,12 +154,16 @@ static void processProperties(const OneOf& oneOf, const Required& required, Prop
 {
 	if( oneOf.size() > 0 ) {
 
-		// tricky part of selecting which "oneOf" array of requirements must be applied
+        // tricky part of selecting which "oneOf" array of requirements must be applied
+        // because depends on the json document to be validated by this json schema
+        // therefore all posibilites will be mark as required and their 'descriptions' are supposed to provided extra details
 		for(const auto& o : oneOf) {
-			bool allRequirementsPresent {false};
-			for(const auto& r : o) {
-// TODO: oneOf
-			}
+            for(const auto& r : o) {
+                 auto found = properties.find(r);
+                 if( found != properties.end() ) {
+                     found->second.required = true;
+                 }
+            }
 		}
 
 	} else if ( required.size() > 0 ) {
@@ -168,7 +172,6 @@ static void processProperties(const OneOf& oneOf, const Required& required, Prop
 			if( found != properties.end() ) {
 				found->second.required = true;
 			}
-
 		}
 	}
 }
@@ -176,13 +179,6 @@ static void processProperties(const OneOf& oneOf, const Required& required, Prop
 static std::set<std::string> ignoreSchemaRoot {"description", "title", "$schema", "type"};
 
 using lambda_t = std::function<void(const OneOf&, const Required&, const Properties&, std::string&)>;
-
-static lambda_t html = [](const OneOf& oneOf, const Required& required, const Properties& properties, std::string& filtered)
-{
-    for(const auto& p : properties) { filtered += p.second.name
-                + (p.second.required?"<required>":"")
-                + "{" + p.second.type + "}\n"; }
-};
 
 static void SetProperties(const rapidjson::Document& document, std::string element, const std::set<std::string> ignoreSet, std::string& filtered, const lambda_t& lambda)
 {
@@ -208,6 +204,7 @@ static void SetProperties(const rapidjson::Document& document, std::string eleme
                 for(auto&& k : j["required"].GetArray()) {
                    temp.emplace_back(std::string{k.GetString()});
                 }
+                oneOf.emplace_back(temp);
             }
         } else if( name == "required" ) {
             for(auto&& j : object["required"].GetArray()) {
@@ -223,6 +220,7 @@ static void SetProperties(const rapidjson::Document& document, std::string eleme
               properties.emplace(std::make_pair(name, Property{false, name, type, description}));
             }
         } else if( name == "items" ) {
+            if(object["items"].GetObject().HasMember("properties")) {
              auto&& items {object["items"]["properties"].GetObject()};
              for(auto&& j = items.MemberBegin(); j != items.MemberEnd(); ++j) {
               std::string name{j->name.GetString()};
@@ -232,6 +230,21 @@ static void SetProperties(const rapidjson::Document& document, std::string eleme
               getString(document, element, "/items/properties/", name, "/description", description);
               properties.emplace(std::make_pair(name, Property{false, name, type, description}));
             }
+           }
+           if(object["items"].GetObject().HasMember("required")) {
+            for(auto&& j : object["items"]["required"].GetArray()) {
+                required.emplace_back(std::string{j.GetString()});
+            }
+           }
+           if(object["items"].GetObject().HasMember("oneOf")) {
+            for(auto&& j : object["items"]["oneOf"].GetArray()) {
+                Required temp {};
+                for(auto&& k : j["required"].GetArray()) {
+                   temp.emplace_back(std::string{k.GetString()});
+                }
+                oneOf.emplace_back(temp);
+            }
+           }
         }
     }
     processProperties(oneOf, required, properties);
@@ -242,6 +255,17 @@ static void SetProperties(const rapidjson::Document& document, std::string eleme
 
 
 }
+
+static lambda_t html = [](const OneOf& oneOf, const Required& required, const Properties& properties, std::string& filtered)
+{
+    for(const auto& p : properties) {
+        filtered += p.second.name
+                + (p.second.required?"<required>":"")
+                + "{" + p.second.type + "}"
+                + (p.second.description.empty()?"":": " + p.second.description)
+                + "\n";
+    }
+};
 
 bool decoupleUserOutput::JsonSchema2HTML::operator()(const decoupleUserOutput::JsonSchema& jsonSchema)
 {
