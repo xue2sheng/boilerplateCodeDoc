@@ -188,6 +188,9 @@ static void processProperties(const OneOf& oneOf, const Required& required, Prop
 			auto found = properties.find(r);
 			if( found != properties.end() ) {
 				found->second.required = true;
+
+				// if nothing was explicitly stated, "required" will be used as "scope"
+				if( found->second.scope.empty() ) { found->second.scope = "required"; }
 			}
 		}
 	}
@@ -271,7 +274,7 @@ static void SetProperties(const rapidjson::Document& document, std::string eleme
 	      std::string metainfo {}; // optional
 	      getString(document, element, "/items/properties/", name, "/metainfo", metainfo);
 	      std::string scope {}; // optional
-	      getString(document, element, "/properties/", name, "/scope", scope);
+	      getString(document, element, "/items/properties/", name, "/scope", scope);
 	      properties.emplace(std::make_pair(name, Property{false, scope, name, type, description, title, parentTitle, metatype, metainfo}));
             }
 
@@ -317,22 +320,27 @@ static void SetProperties(const rapidjson::Document& document, std::string eleme
 
 static lambda_t html = [](const Properties& properties, std::string& filtered, std::string& css_id)
 {
+  if(properties.size() > 0) {
     bool pending_header {true};
     for(const auto& p : properties) {
-	    if(pending_header && not p.second.parentTitle.empty()) {
-		    filtered += "<h3 id=\"" + css_id + "\">" + p.second.parentTitle + "</h3>\n";
+	    if(pending_header) {
+		    if(not p.second.parentTitle.empty()) {
+		      filtered += "<h3 id=\"" + css_id + "\">" + p.second.parentTitle + "</h3>\n";
+		    }
 		    filtered += "<table id=\"" + css_id + "\">\n";
-		    filtered += "<tr><th>Field<th>Scope</tr>";
+		    filtered += "<tr><th>Field<th>Scope</th><th>Type</th><th>Description</th><th>Info</th></tr>\n";
+		    pending_header = false;
 	    }
-		filtered+= p.second.name
-                + (p.second.required?"<required>":"")
-		+ "{" + p.second.type + "}"
-		+ "<" + p.second.metainfo + ">"
-		+ "[" + p.second.metatype + "]"
-		+ (p.second.description.empty()?"":": " + p.second.description)
-		+ (p.second.title.empty()?"":" *** " + p.second.title)
-                + "\n";
+	    filtered += "<tr>";
+	    filtered += "<td>" + p.second.name + "</td>";
+	    filtered += "<td>" + p.second.scope + "</td>";
+	    filtered += "<td>" + p.second.type + "</td>";
+	    filtered += "<td>" + p.second.description + "</td>";
+	    filtered += "<td>" + p.second.metainfo + "</td>";
+	    filtered += "</tr>\n";
     }
+    filtered += "</table>\n<br /><br />\n";
+  }
 };
 
 bool boilerplateCodeDoc::JsonSchema2HTML::operator()(const boilerplateCodeDoc::JsonSchema& jsonSchema)

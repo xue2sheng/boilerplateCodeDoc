@@ -112,6 +112,8 @@ namespace boilerplateCodeDoc {
 	 }
 	 table#boilerplate {
 	     width: 100%;
+	 }
+	 th {
 	     background-color: #f1f1c1;
 	 }
 	 </style>

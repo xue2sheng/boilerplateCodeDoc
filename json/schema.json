@@ -14,12 +14,12 @@
       "type": "string"
     },
     "imp": {
-      "title": "Impression",
       "description": "Impressions rock",
       "type": "array",
       "metatype": "std::vector<Impression>",
       "metainfo": "implemented",
       "items": {
+        "title": "Impression",
         "type": "object",
         "properties": {
           "id": {
@@ -27,19 +27,23 @@
           },
           "banner": {
             "type": "object",
-            "metainfo": "not implemented"
+            "metainfo": "not implemented",
+            "scope": "required for banner impressions"
           },
           "audio": {
             "type": "object",
-            "metainfo": "not implemented"
+            "metainfo": "not implemented",
+            "scope": "required for audio impressions"
           },
           "video": {
             "type": "object",
-            "metainfo": "not implemented"
+            "metainfo": "not implemented",
+            "scope": "required for video impressions"
           },
           "native": {
             "title" : "Native",
             "type": "object",
+            "scope": "required for native impressions",
             "properties": {
               "request": {
                 "type": "string"
@@ -70,9 +74,9 @@
                 "default": 0
               },
               "deals": {
-                "title": "Deals",
                 "type": "array",
                 "items": {
+                  "title": "Deal",
                   "type": "object",
                   "properties": {
                     "id": {
