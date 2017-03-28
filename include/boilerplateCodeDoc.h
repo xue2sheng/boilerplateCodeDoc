@@ -116,6 +116,26 @@ namespace boilerplateCodeDoc {
 	 th {
 	     background-color: #f1f1c1;
 	 }
+	 a:link {
+	     color: green;
+	     background-color: transparent;
+	     text-decoration: none;
+	 }
+	 a:visited {
+	     color: pink;
+	     background-color: transparent;
+	     text-decoration: none;
+	 }
+	 a:hover {
+	     color: red;
+	     background-color: transparent;
+	     text-decoration: underline;
+	 }
+	 a:active {
+	     color: yellow;
+	     background-color: transparent;
+	     text-decoration: underline;
+	 }
 	 </style>
 	 </head>
 	 <body>

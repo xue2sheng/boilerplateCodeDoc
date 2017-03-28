@@ -18,8 +18,10 @@
       "type": "array",
       "metatype": "std::vector<Impression>",
       "metainfo": "implemented",
+      "bookmarkSource": "#impression",
       "items": {
         "title": "Impression",
+        "bookmarkTarget": "impression",
         "type": "object",
         "properties": {
           "id": {

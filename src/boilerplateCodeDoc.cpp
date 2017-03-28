@@ -142,11 +142,14 @@ struct Property {
     std::string title {};
     std::string parentTitle {};
     std::string metatype {};
-    std::string metainfo {true};
+    std::string metainfo {};
+    std::string bookmark_source {};
+    std::string bookmark_target {};
     Property(bool req, std::string sco, std::string nam, std::string typ, std::string des, std::string tit,
-	     std::string par, std::string met, std::string inf)
+	     std::string par, std::string met, std::string inf, std::string bs, std::string bt)
 	: required{req}, scope{std::move(sco)}, name{std::move(nam)}, type{std::move(typ)}, description{std::move(des)}, title{std::move(tit)},
-	  parentTitle{std::move(par)}, metatype{std::move(met)}, metainfo{std::move(inf)} {}
+	  parentTitle{std::move(par)}, metatype{std::move(met)}, metainfo{std::move(inf)},
+	  bookmark_source{std::move(bs)}, bookmark_target{std::move(bt)} {}
 };
 using Properties = std::map<std::string, Property>;
 
@@ -251,7 +254,12 @@ static void SetProperties(const rapidjson::Document& document, std::string eleme
 	      getString(document, element, "/properties/", name, "/metainfo", metainfo);
 	      std::string scope {}; // optional
 	      getString(document, element, "/properties/", name, "/scope", scope);
-	      properties.emplace(std::make_pair(name, Property{false, scope, name, type, description, title, parentTitle, metatype, metainfo}));
+	      std::string bookmark_source {}; // optional
+	      getString(document, element, "/properties/", name, "/bookmarkSource", bookmark_source);
+	      std::string bookmark_target {}; // optional
+	      getString(document, element, "", "", "/bookmarkTarget", bookmark_target);
+	      properties.emplace(std::make_pair(name, Property{false, scope, name, type, description, title,
+							       parentTitle, metatype, metainfo, bookmark_source, bookmark_target}));
             }
 
             nextElement = element + "/properties/"; // recursive call
@@ -269,13 +277,18 @@ static void SetProperties(const rapidjson::Document& document, std::string eleme
 	      getString(document, element, "/items/properties/", name, "/title", title);
               std::string parentTitle {}; // optional
 	      getString(document, element, "/items", "", "/title", parentTitle);
-	       std::string metatype {}; // optional
+	      std::string metatype {}; // optional
 	      getString(document, element, "/items/properties/", name, "/metatype", metatype);
 	      std::string metainfo {}; // optional
 	      getString(document, element, "/items/properties/", name, "/metainfo", metainfo);
 	      std::string scope {}; // optional
 	      getString(document, element, "/items/properties/", name, "/scope", scope);
-	      properties.emplace(std::make_pair(name, Property{false, scope, name, type, description, title, parentTitle, metatype, metainfo}));
+	      std::string bookmark_source {}; // optional
+	      getString(document, element, "/items/properties/", name, "/bookmarkSource", bookmark_source);
+	      std::string bookmark_target {}; // optional
+	      getString(document, element, "/items", "", "/bookmarkTarget", bookmark_target);
+	      properties.emplace(std::make_pair(name, Property{false, scope, name, type, description, title,
+							       parentTitle, metatype, metainfo, bookmark_source, bookmark_target}));
             }
 
             nextElement = element + "/items/properties/"; // recursive call
@@ -321,25 +334,38 @@ static void SetProperties(const rapidjson::Document& document, std::string eleme
 static lambda_t html = [](const Properties& properties, std::string& filtered, std::string& css_id)
 {
   if(properties.size() > 0) {
-    bool pending_header {true};
+
+    // header
+    std::string parentTitle {};
+    std::string bookmark_target {};
     for(const auto& p : properties) {
-	    if(pending_header) {
-		    if(not p.second.parentTitle.empty()) {
-		      filtered += "<h3 id=\"" + css_id + "\">" + p.second.parentTitle + "</h3>\n";
-		    }
-		    filtered += "<table id=\"" + css_id + "\">\n";
-		    filtered += "<tr><th>Field<th>Scope</th><th>Type</th><th>Description</th><th>Info</th></tr>\n";
-		    pending_header = false;
-	    }
+	if( not p.second.parentTitle.empty() ) { parentTitle = p.second.parentTitle; }
+	if( not p.second.bookmark_target.empty() ) { bookmark_target = p.second.bookmark_target; }
+    }
+    if(not parentTitle.empty() || not bookmark_target.empty()) {
+	filtered += "<h3 id=\"" + bookmark_target + "\">" + parentTitle + "</h3>\n";
+    }
+    filtered += "<table id=\"" + css_id + "\">\n";
+    filtered += "<tr><th>Field<th>Scope</th><th>Type</th><th>Description</th><th>Info</th></tr>\n";
+
+    // body
+    for(const auto& p : properties) {
 	    filtered += "<tr>";
-	    filtered += "<td>" + p.second.name + "</td>";
+	    if( p.second.bookmark_source.empty() ) {
+		 filtered += "<td>" + p.second.name + "</td>";
+	    } else {
+		 filtered += "<td><a href=\"" + p.second.bookmark_source + "\">" + p.second.name + "</a></td>";
+	    }
 	    filtered += "<td>" + p.second.scope + "</td>";
 	    filtered += "<td>" + p.second.type + "</td>";
 	    filtered += "<td>" + p.second.description + "</td>";
 	    filtered += "<td>" + p.second.metainfo + "</td>";
 	    filtered += "</tr>\n";
     }
-    filtered += "</table>\n<br /><br />\n";
+
+    if( properties.size() > 0) {
+	filtered += "</table>\n<br /><br />\n";
+    }
   }
 };
 
