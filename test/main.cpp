@@ -16,6 +16,21 @@ namespace boiler = boilerplateCodeDoc;
 // make CTEST_OUTPUT_ON_FAILURE=1 test
 // just logging something ( --log_level=message )
 
+static constexpr const char* const CSS {R"(
+table, th, td {
+    border: 1px solid black;
+    border-collapse: collapse;
+}
+th, td {
+    padding: 5px;
+    text-align: left;
+}
+table#t01 {
+    width: 100%;
+    background-color: #f1f1c1;
+}
+)"};
+
 struct GlobalInit {
   GlobalInit() : argc(boost::unit_test_framework::framework::master_test_suite().argc),
 		argv(boost::unit_test_framework::framework::master_test_suite().argv){}

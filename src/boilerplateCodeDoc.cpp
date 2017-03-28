@@ -294,11 +294,14 @@ static lambda_t html = [](const Properties& properties, std::string& filtered)
                 + (p.second.required?"<required>":"")
 		+ "{" + p.second.type + "}"
 		+ "<" + p.second.metainfo + ">"
-                + (p.second.description.empty()?"":": " + p.second.description)
+		+ "[" + p.second.metatype + "]"
+		+ (p.second.description.empty()?"":": " + p.second.description)
                 + (p.second.title.empty()?"":" *** " + p.second.title)
                 + "\n";
     }
 };
+
+
 
 bool boilerplateCodeDoc::JsonSchema2HTML::operator()(const boilerplateCodeDoc::JsonSchema& jsonSchema)
 {
@@ -316,13 +319,15 @@ bool boilerplateCodeDoc::JsonSchema2HTML::operator()(const boilerplateCodeDoc::J
 		return false;
 	    }
 
-	     //std::string element {"#/properties/imp/items/properties/native"};
-         std::string element {"#"};
-         SetProperties(document, element, filtered, html);
+	    //std::string element {"#/properties/imp/items/properties/native"};
+	    std::string element {"#"};
+	    filtered = header;
+	    SetProperties(document, element, filtered, html);
+	    filtered += footer;
 
-	     error = boilerplateCodeDoc::ParseErrorCode::OK;
-	     message = to_string(error);
-	     return true;
+	    error = boilerplateCodeDoc::ParseErrorCode::OK;
+	    message = to_string(error);
+	    return true;
 
     } catch(...) {
 	error = boilerplateCodeDoc::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;

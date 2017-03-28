@@ -48,21 +48,72 @@ namespace boilerplateCodeDoc {
 
     /// @brief Basic interface to process Json file similar.
     struct JsonSchemaFilter {
-      virtual ~JsonSchemaFilter() = default;
-      ParseErrorCode error {ParseErrorCode::OK};
-      std::string message {}; // error message
 
-      //rapidjosn filter
-      virtual bool operator()(const JsonSchema& jsonSchema) = 0; // void to avoid rapidjson dependencies
-      std::string filtered {}; // result of this filter
+      ///@brief typical virtual destructor just in case
+      virtual ~JsonSchemaFilter() = default;
+
+      ///@brief Error code
+      ParseErrorCode error {ParseErrorCode::OK};
+
+      ///@brief Message associated to previous eror code
+      std::string message {};
+
+      ///@brief rapidjosn filter
+      ///@remarks void to avoid rapidjson dependencies
+      virtual bool operator()(const JsonSchema& jsonSchema) = 0;
+
+      ///@brief result of that filter
+      std::string filtered {};
     };
+
 
     /// @brief Specific handler to generate HTML tables.
     /// @remark Style will be provided by CSS if needed.
     struct JsonSchema2HTML final: public JsonSchemaFilter {
+
+      ///@brief Default CSS id
+      static constexpr const char* const CSS_ID {"boilerplate"};
+
+      ///@brief Default HTML head+body header
+      static constexpr const char* const HEADER {R"(
+	 <!DOCTYPE html>
+	 <html>
+	 <head>
+	 <style>
+	 table, th, td {
+	     border: 1px solid black;
+	     border-collapse: collapse;
+	 }
+	 th, td {
+	     padding: 5px;
+	     text-align: left;
+	 }
+	 table#t01 {
+	     width: 100%;
+	     background-color: #f1f1c1;
+	 }
+	 </style>
+	 </head>
+	 <body>
+      )"};
+
+      ///@brief Default HTML body footer
+      static constexpr const char* const FOOTER {R"(
+	 </body>
+	 </html>
+      )"};
+
+      ///@brief filter to apply
       bool operator()(const JsonSchema& jsonSchema) override;
-      std::string css_id {};
-      std::string css {};
+
+      ///@brief css id to be added to generated tables
+      std::string css_id {CSS_ID};
+
+      ///@brief HTML page header
+      std::string header {HEADER};
+
+      ///@brief HTML page footer
+      std::string footer {FOOTER};
     };
 
 } // namespace
