@@ -38,10 +38,21 @@ namespace boilerplateCodeDoc {
       /// @return if success returns true, otherwise false.
       explicit JsonSchema(std::string filename);
 
+      /// @brief Error code
       ParseErrorCode error {ParseErrorCode::OK};
+
+      ///@brief Error message
       std::string message {}; // error message
-      void* document_ptr {nullptr}; // void to avoid rapidjson dependencies
+
+      ///@brief Internal pointer: void to avoid rapidjson dependencies
+      void* document_ptr {nullptr};
+
+      ///@brief Json Schema title
+      ///@remarks for debugging
       std::string title {};
+
+      ///@brief Json Schema description
+      ///@remarks for debugging
       std::string description {};
     };
 
@@ -51,6 +62,9 @@ namespace boilerplateCodeDoc {
 
       ///@brief typical virtual destructor just in case
       virtual ~JsonSchemaFilter() = default;
+
+      ///@brief simplest consturctor
+      JsonSchemaFilter(std::string header_ = "", std::string footer_ = "") : header{std::move(header_)}, footer{std::move(footer_)} {}
 
       ///@brief Error code
       ParseErrorCode error {ParseErrorCode::OK};
@@ -64,6 +78,14 @@ namespace boilerplateCodeDoc {
 
       ///@brief result of that filter
       std::string filtered {};
+
+      ///@brief preambule
+      /// @remark to override
+      std::string header {};
+
+      ///@brief ending
+      /// @remark to override
+      std::string footer {};
     };
 
 
@@ -103,17 +125,15 @@ namespace boilerplateCodeDoc {
 	 </html>
       )"};
 
+      ///@brief simplest constructor
+      JsonSchema2HTML(std::string header_ = HEADER, std::string footer_ = FOOTER, std::string css_id_ = CSS_ID) :
+	      JsonSchemaFilter(header_, footer_),  css_id{std::move(css_id_)} {}
+
       ///@brief filter to apply
       bool operator()(const JsonSchema& jsonSchema) override;
 
       ///@brief css id to be added to generated tables
-      std::string css_id {CSS_ID};
-
-      ///@brief HTML page header
-      std::string header {HEADER};
-
-      ///@brief HTML page footer
-      std::string footer {FOOTER};
+      std::string css_id {};
     };
 
 } // namespace
