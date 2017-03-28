@@ -183,6 +183,7 @@ static void SetProperties(const rapidjson::Document& document, std::string eleme
     OneOf oneOf {};
     Required required {};
     Properties properties {};
+    std::string nextElement {};
 
     // Do nothing if there's nothing to do
     if( not rapidjson::Pointer(element.c_str()).IsValid() ) { return; }
@@ -216,6 +217,9 @@ static void SetProperties(const rapidjson::Document& document, std::string eleme
               getString(document, element, "/properties/", name, "/description", description);
               properties.emplace(std::make_pair(name, Property{false, name, type, description}));
             }
+
+            nextElement = element + "/properties/"; // recursive call
+
         } else if( name == "items" ) {
             if(object["items"].GetObject().HasMember("properties")) {
              auto&& items {object["items"]["properties"].GetObject()};
@@ -227,6 +231,9 @@ static void SetProperties(const rapidjson::Document& document, std::string eleme
               getString(document, element, "/items/properties/", name, "/description", description);
               properties.emplace(std::make_pair(name, Property{false, name, type, description}));
             }
+
+            nextElement = element + "/items/properties/"; // recursive call
+
            }
            if(object["items"].GetObject().HasMember("required")) {
             for(auto&& j : object["items"]["required"].GetArray()) {
@@ -244,11 +251,15 @@ static void SetProperties(const rapidjson::Document& document, std::string eleme
            }
         }
     }
-    processProperties(oneOf, required, properties);
-
-    lambda(properties, filtered);
+    processProperties(oneOf, required, properties); // what is required
+    lambda(properties, filtered); // apply filter
 
     // recursive call
+    for(const auto& p : properties) {
+        if( "object" == p.second.type || "array" == p.second.type) {
+            SetProperties(document, nextElement + p.second.name, filtered, lambda);
+        }
+    }
 
 }
 
