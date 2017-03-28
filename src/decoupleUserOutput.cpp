@@ -5,6 +5,7 @@
 #include <utility>
 #include <map>
 #include <set>
+#include <functional>
 #include <rapidjson/rapidjson.h>
 #include <rapidjson/document.h>
 #include <rapidjson/error/en.h>
