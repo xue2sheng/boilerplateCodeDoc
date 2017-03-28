@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 
-set(LOCAL_CMAKE_PROJECT_NAME DecoupleUserOutput) 
+set(LOCAL_CMAKE_PROJECT_NAME BoilerplateCodeDoc) 
 project(${LOCAL_CMAKE_PROJECT_NAME} NONE) 
 
 ### Specific configuration ###
