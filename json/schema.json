@@ -15,8 +15,10 @@
     },
     "imp": {
       "title": "Impressions",
-      "description": "partially implemented",
+      "description": "Impressions rocks",
       "type": "array",
+      "metatype": "std::vector<Impression>",
+      "metainfo": "implemented",
       "items": {
         "type": "object",
         "properties": {
@@ -25,15 +27,15 @@
           },
           "banner": {
             "type": "object",
-            "description": "not implemented"
+            "metainfo": "not implemented"
           },
           "audio": {
             "type": "object",
-            "description": "not implemented"
+            "metainfo": "not implemented"
           },
           "video": {
             "type": "object",
-            "description": "not implemented"
+            "metainfo": "not implemented"
           },
           "native": {
             "title" : "Native",

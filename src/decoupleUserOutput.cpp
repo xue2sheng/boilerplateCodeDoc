@@ -129,14 +129,18 @@ static inline bool ignore(const std::string& name, const std::set<std::string>& 
 using Required = std::vector<std::string>;
 using OneOf = std::vector<Required>;
 struct Property {
-	bool required {false};
-	std::string name {};
-	std::string type {};
+    bool required {false};
+    std::string name {};
+    std::string type {};
     std::string description {};
     std::string title {};
     std::string parentTitle {};
-    Property(bool req, std::string nam, std::string typ, std::string des, std::string tit, std::string par)
-        : required{req}, name{std::move(nam)}, type{std::move(typ)}, description{std::move(des)}, title{std::move(tit)}, parentTitle{std::move(par)} {}
+    std::string metatype {};
+    std::string metainfo {true};
+    Property(bool req, std::string nam, std::string typ, std::string des, std::string tit,
+	     std::string par, std::string met, std::string inf)
+	: required{req}, name{std::move(nam)}, type{std::move(typ)}, description{std::move(des)}, title{std::move(tit)},
+	  parentTitle{std::move(par)}, metatype{std::move(met)}, metainfo{std::move(inf)} {}
 };
 using Properties = std::map<std::string, Property>;
 
@@ -222,7 +226,11 @@ static void SetProperties(const rapidjson::Document& document, std::string eleme
               getString(document, element, "/properties/", name, "/title", title);
               std::string parentTitle {}; // optional
               getString(document, element, "", "", "/title", parentTitle);
-              properties.emplace(std::make_pair(name, Property{false, name, type, description, title, parentTitle}));
+	      std::string metatype {}; // optional
+	      getString(document, element, "/properties/", name, "/metatype", metatype);
+	      std::string metainfo {}; // optional
+	      getString(document, element, "/properties/", name, "/metainfo", metainfo);
+	      properties.emplace(std::make_pair(name, Property{false, name, type, description, title, parentTitle, metatype, metainfo}));
             }
 
             nextElement = element + "/properties/"; // recursive call
@@ -239,8 +247,12 @@ static void SetProperties(const rapidjson::Document& document, std::string eleme
               std::string title {}; // optional
               getString(document, element, "/properties/", name, "/title", title);
               std::string parentTitle {}; // optional
-              getString(document, element, "", "", "/title", parentTitle);
-              properties.emplace(std::make_pair(name, Property{false, name, type, description, title, parentTitle}));
+	      getString(document, element, "", "", "/title", parentTitle);
+	       std::string metatype {}; // optional
+	      getString(document, element, "/properties/", name, "/metatype", metatype);
+	      std::string metainfo {}; // optional
+	      getString(document, element, "/properties/", name, "/metainfo", metainfo);
+	      properties.emplace(std::make_pair(name, Property{false, name, type, description, title, parentTitle, metatype, metainfo}));
             }
 
             nextElement = element + "/items/properties/"; // recursive call
