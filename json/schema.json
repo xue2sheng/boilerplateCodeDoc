@@ -14,6 +14,7 @@
       "type": "string"
     },
     "imp": {
+      "title": "Impressions",
       "description": "partially implemented",
       "type": "array",
       "items": {
@@ -35,6 +36,7 @@
             "description": "not implemented"
           },
           "native": {
+            "title" : "Native",
             "type": "object",
             "properties": {
               "request": {
@@ -56,6 +58,7 @@
             ]
           },
           "pmp": {
+            "title" : "PMP",
             "type": "object",
             "properties": {
               "private_auction": {
@@ -65,6 +68,7 @@
                 "default": 0
               },
               "deals": {
+                "title": "Deals",
                 "type": "array",
                 "items": {
                   "type": "object",
@@ -155,6 +159,7 @@
             "type": "integer"
           },
           "ext": {
+            "title": "Extension",
             "type": "object",
             "properties": {
               "strictbannersize": {
