@@ -135,6 +135,7 @@ using Required = std::vector<std::string>;
 using OneOf = std::vector<Required>;
 struct Property {
     bool required {false};
+    std::string scope {};
     std::string name {};
     std::string type {};
     std::string description {};
@@ -142,9 +143,9 @@ struct Property {
     std::string parentTitle {};
     std::string metatype {};
     std::string metainfo {true};
-    Property(bool req, std::string nam, std::string typ, std::string des, std::string tit,
+    Property(bool req, std::string sco, std::string nam, std::string typ, std::string des, std::string tit,
 	     std::string par, std::string met, std::string inf)
-	: required{req}, name{std::move(nam)}, type{std::move(typ)}, description{std::move(des)}, title{std::move(tit)},
+	: required{req}, scope{std::move(sco)}, name{std::move(nam)}, type{std::move(typ)}, description{std::move(des)}, title{std::move(tit)},
 	  parentTitle{std::move(par)}, metatype{std::move(met)}, metainfo{std::move(inf)} {}
 };
 using Properties = std::map<std::string, Property>;
@@ -173,8 +174,12 @@ static void processProperties(const OneOf& oneOf, const Required& required, Prop
             for(const auto& r : o) {
                  auto found = properties.find(r);
                  if( found != properties.end() ) {
-                     found->second.required = true;
-                 }
+		     found->second.required = true;
+
+		     // if nothing was explicitly stated, "required" will be used as "scope"
+		     if( found->second.scope.empty() ) { found->second.scope = "required"; }
+
+		 }
             }
 		}
 
@@ -186,11 +191,17 @@ static void processProperties(const OneOf& oneOf, const Required& required, Prop
 			}
 		}
 	}
+
+	// by default "scope" will be "optional"
+	for(auto&& p : properties) {
+		if( p.second.scope.empty() ) { p.second.scope = "optional"; }
+	}
+
 }
 
-using lambda_t = std::function<void(const Properties&, std::string&)>;
+using lambda_t = std::function<void(const Properties&, std::string&, std::string&)>;
 
-static void SetProperties(const rapidjson::Document& document, std::string element, std::string& filtered, const lambda_t& lambda)
+static void SetProperties(const rapidjson::Document& document, std::string element, std::string& filtered, const lambda_t& lambda, std::string& extra)
 {
     OneOf oneOf {};
     Required required {};
@@ -235,7 +246,9 @@ static void SetProperties(const rapidjson::Document& document, std::string eleme
 	      getString(document, element, "/properties/", name, "/metatype", metatype);
 	      std::string metainfo {}; // optional
 	      getString(document, element, "/properties/", name, "/metainfo", metainfo);
-	      properties.emplace(std::make_pair(name, Property{false, name, type, description, title, parentTitle, metatype, metainfo}));
+	      std::string scope {}; // optional
+	      getString(document, element, "/properties/", name, "/scope", scope);
+	      properties.emplace(std::make_pair(name, Property{false, scope, name, type, description, title, parentTitle, metatype, metainfo}));
             }
 
             nextElement = element + "/properties/"; // recursive call
@@ -257,7 +270,9 @@ static void SetProperties(const rapidjson::Document& document, std::string eleme
 	      getString(document, element, "/items/properties/", name, "/metatype", metatype);
 	      std::string metainfo {}; // optional
 	      getString(document, element, "/items/properties/", name, "/metainfo", metainfo);
-	      properties.emplace(std::make_pair(name, Property{false, name, type, description, title, parentTitle, metatype, metainfo}));
+	      std::string scope {}; // optional
+	      getString(document, element, "/properties/", name, "/scope", scope);
+	      properties.emplace(std::make_pair(name, Property{false, scope, name, type, description, title, parentTitle, metatype, metainfo}));
             }
 
             nextElement = element + "/items/properties/"; // recursive call
@@ -280,12 +295,12 @@ static void SetProperties(const rapidjson::Document& document, std::string eleme
         }
     }
     processProperties(oneOf, required, properties); // what is required
-    lambda(properties, filtered); // apply filter
+    lambda(properties, filtered, extra); // apply filter
 
     // recursive call
     for(const auto& p : properties) {
         if( "object" == p.second.type || "array" == p.second.type) {
-            SetProperties(document, nextElement + p.second.name, filtered, lambda);
+	    SetProperties(document, nextElement + p.second.name, filtered, lambda, extra);
         }
     }
 
@@ -300,17 +315,22 @@ static void SetProperties(const rapidjson::Document& document, std::string eleme
 /****************************************************************************************/
 /****************************************************************************************/
 
-static lambda_t html = [](const Properties& properties, std::string& filtered)
+static lambda_t html = [](const Properties& properties, std::string& filtered, std::string& css_id)
 {
+    bool pending_header {true};
     for(const auto& p : properties) {
-        filtered += (p.second.parentTitle.empty()?"":p.second.parentTitle + "-> ")
-                + p.second.name
+	    if(pending_header && not p.second.parentTitle.empty()) {
+		    filtered += "<h3 id=\"" + css_id + "\">" + p.second.parentTitle + "</h3>\n";
+		    filtered += "<table id=\"" + css_id + "\">\n";
+		    filtered += "<tr><th>Field<th>Scope</tr>";
+	    }
+		filtered+= p.second.name
                 + (p.second.required?"<required>":"")
 		+ "{" + p.second.type + "}"
 		+ "<" + p.second.metainfo + ">"
 		+ "[" + p.second.metatype + "]"
 		+ (p.second.description.empty()?"":": " + p.second.description)
-                + (p.second.title.empty()?"":" *** " + p.second.title)
+		+ (p.second.title.empty()?"":" *** " + p.second.title)
                 + "\n";
     }
 };
@@ -334,7 +354,7 @@ bool boilerplateCodeDoc::JsonSchema2HTML::operator()(const boilerplateCodeDoc::J
 	    //std::string element {"#/properties/imp/items/properties/native"};
 	    std::string element {"#"};
 	    filtered = header;
-	    SetProperties(document, element, filtered, html);
+	    SetProperties(document, element, filtered, html, css_id);
 	    filtered += footer;
 
 	    error = boilerplateCodeDoc::ParseErrorCode::OK;

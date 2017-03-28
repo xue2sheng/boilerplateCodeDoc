@@ -110,7 +110,7 @@ namespace boilerplateCodeDoc {
 	     padding: 5px;
 	     text-align: left;
 	 }
-	 table#t01 {
+	 table#boilerplate {
 	     width: 100%;
 	     background-color: #f1f1c1;
 	 }
