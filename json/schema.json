@@ -14,8 +14,8 @@
       "type": "string"
     },
     "imp": {
-      "title": "Impressions",
-      "description": "Impressions rocks",
+      "title": "Impression",
+      "description": "Impressions rock",
       "type": "array",
       "metatype": "std::vector<Impression>",
       "metainfo": "implemented",

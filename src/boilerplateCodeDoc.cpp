@@ -13,23 +13,23 @@
 
 // automatically generate version info
 #include "version.h"
-#include "decoupleUserOutput.h"
+#include "boilerplateCodeDoc.h"
 
 // debug
-#include <iostream>
+//#include <iostream>
 
-static inline std::string to_string(const decoupleUserOutput::ParseErrorCode& error) {
+static inline std::string to_string(const boilerplateCodeDoc::ParseErrorCode& error) {
 	    switch(error) {
 		default: return "Unknown ParseErrorCode";
-		case decoupleUserOutput::ParseErrorCode::OK: return "OK";
-		case decoupleUserOutput::ParseErrorCode::EMPTY_FILENAME: return "EMPTY_FILENAME";
-		case decoupleUserOutput::ParseErrorCode::UNEXPECTED_ERROR_PROCESSING_SCHEMA_JSON_FILE: return "UNEXPECTED_ERROR_PROCESSING_SCHEMA_JSON_FILE";
-		case decoupleUserOutput::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON: return "ERROR_PARSING_SCHEMA_JSON";
-		case decoupleUserOutput::ParseErrorCode::UNABLE_OPEN_FILE: return "UNABLE_OPEN_FILE";
+		case boilerplateCodeDoc::ParseErrorCode::OK: return "OK";
+		case boilerplateCodeDoc::ParseErrorCode::EMPTY_FILENAME: return "EMPTY_FILENAME";
+		case boilerplateCodeDoc::ParseErrorCode::UNEXPECTED_ERROR_PROCESSING_SCHEMA_JSON_FILE: return "UNEXPECTED_ERROR_PROCESSING_SCHEMA_JSON_FILE";
+		case boilerplateCodeDoc::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON: return "ERROR_PARSING_SCHEMA_JSON";
+		case boilerplateCodeDoc::ParseErrorCode::UNABLE_OPEN_FILE: return "UNABLE_OPEN_FILE";
 	    }
 }
 
-decoupleUserOutput::JsonSchema::~JsonSchema()
+boilerplateCodeDoc::JsonSchema::~JsonSchema()
 {
 	if(document_ptr) {
 		delete reinterpret_cast<rapidjson::Document*>(document_ptr);
@@ -37,11 +37,11 @@ decoupleUserOutput::JsonSchema::~JsonSchema()
 	}
 }
 
-decoupleUserOutput::JsonSchema::JsonSchema(std::string filename)
+boilerplateCodeDoc::JsonSchema::JsonSchema(std::string filename)
 {
 
 	if( filename.empty() ) {
-		error = decoupleUserOutput::ParseErrorCode::EMPTY_FILENAME;
+		error = boilerplateCodeDoc::ParseErrorCode::EMPTY_FILENAME;
 		message = to_string(error);
 		return;
 	}
@@ -69,7 +69,7 @@ decoupleUserOutput::JsonSchema::JsonSchema(std::string filename)
 
 		     rapidjson::ParseResult ok = document.Parse(contents.c_str());
 		     if( not ok ) {
-			 error = decoupleUserOutput::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
+			 error = boilerplateCodeDoc::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
 			 message = to_string(error);
 			 message += " [";
 			 message += std::string(rapidjson::GetParseError_En(ok.Code())) + " : " + std::to_string(ok.Offset());
@@ -78,25 +78,25 @@ decoupleUserOutput::JsonSchema::JsonSchema(std::string filename)
 		     }
 
 		     if( document.IsNull() ) {
-			     error = decoupleUserOutput::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
+			     error = boilerplateCodeDoc::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
 			     message = "Json Schema document shouldn't be NULL";
 			     return;
 		     }
 
 		     if(document.IsObject()) {
 			     if( not document.HasMember("$schema") ) {
-				error = decoupleUserOutput::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
+				error = boilerplateCodeDoc::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
 				message = "Missing expected $schema root object";
 				return;
 			     }
 			      if( not document.HasMember("title") ) {
-				error = decoupleUserOutput::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
+				error = boilerplateCodeDoc::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
 				message = "Missing expected schema title";
 				return;
 			     }
 
 			      if( not document.HasMember("description") ) {
-				error = decoupleUserOutput::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
+				error = boilerplateCodeDoc::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
 				message = "Missing expected schema description";
 				return;
 			     }
@@ -104,21 +104,21 @@ decoupleUserOutput::JsonSchema::JsonSchema(std::string filename)
 			      title = document["title"].GetString();
 			      description = document["description"].GetString();
 
-			      error = decoupleUserOutput::ParseErrorCode::OK;
+			      error = boilerplateCodeDoc::ParseErrorCode::OK;
 			      message = to_string(error);
 
 		     } else {
-			error = decoupleUserOutput::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
+			error = boilerplateCodeDoc::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
 			message = "Root element of a schema json should be an object";
 		     }
 
 		} else {
-			error = decoupleUserOutput::ParseErrorCode::UNABLE_OPEN_FILE;
+			error = boilerplateCodeDoc::ParseErrorCode::UNABLE_OPEN_FILE;
 			message = to_string(error);
 		}
 
 	} catch(...) {
-		error = decoupleUserOutput::ParseErrorCode::UNEXPECTED_ERROR_PROCESSING_SCHEMA_JSON_FILE;
+		error = boilerplateCodeDoc::ParseErrorCode::UNEXPECTED_ERROR_PROCESSING_SCHEMA_JSON_FILE;
 		message = to_string(error);
 	}
 }
@@ -245,13 +245,13 @@ static void SetProperties(const rapidjson::Document& document, std::string eleme
               std::string description {}; // optional
               getString(document, element, "/items/properties/", name, "/description", description);
               std::string title {}; // optional
-              getString(document, element, "/properties/", name, "/title", title);
+	      getString(document, element, "/items/properties/", name, "/title", title);
               std::string parentTitle {}; // optional
-	      getString(document, element, "", "", "/title", parentTitle);
+	      getString(document, element, "/items", "", "/title", parentTitle);
 	       std::string metatype {}; // optional
-	      getString(document, element, "/properties/", name, "/metatype", metatype);
+	      getString(document, element, "/items/properties/", name, "/metatype", metatype);
 	      std::string metainfo {}; // optional
-	      getString(document, element, "/properties/", name, "/metainfo", metainfo);
+	      getString(document, element, "/items/properties/", name, "/metainfo", metainfo);
 	      properties.emplace(std::make_pair(name, Property{false, name, type, description, title, parentTitle, metatype, metainfo}));
             }
 
@@ -292,17 +292,18 @@ static lambda_t html = [](const Properties& properties, std::string& filtered)
         filtered += (p.second.parentTitle.empty()?"":p.second.parentTitle + "-> ")
                 + p.second.name
                 + (p.second.required?"<required>":"")
-                + "{" + p.second.type + "}"
+		+ "{" + p.second.type + "}"
+		+ "<" + p.second.metainfo + ">"
                 + (p.second.description.empty()?"":": " + p.second.description)
                 + (p.second.title.empty()?"":" *** " + p.second.title)
                 + "\n";
     }
 };
 
-bool decoupleUserOutput::JsonSchema2HTML::operator()(const decoupleUserOutput::JsonSchema& jsonSchema)
+bool boilerplateCodeDoc::JsonSchema2HTML::operator()(const boilerplateCodeDoc::JsonSchema& jsonSchema)
 {
     if( not jsonSchema.document_ptr ) {
-	error = decoupleUserOutput::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
+	error = boilerplateCodeDoc::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
 	message = "Empty document pointer";
 	return false;
     }
@@ -310,7 +311,7 @@ bool decoupleUserOutput::JsonSchema2HTML::operator()(const decoupleUserOutput::J
     rapidjson::Document& document {*reinterpret_cast<rapidjson::Document*>(jsonSchema.document_ptr)};
     try {
 	    if(document.IsNull() || not document.IsObject() ) {
-		error = decoupleUserOutput::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
+		error = boilerplateCodeDoc::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
 		message = "Root element shouldn't be NULL";
 		return false;
 	    }
@@ -319,12 +320,12 @@ bool decoupleUserOutput::JsonSchema2HTML::operator()(const decoupleUserOutput::J
          std::string element {"#"};
          SetProperties(document, element, filtered, html);
 
-	     error = decoupleUserOutput::ParseErrorCode::OK;
+	     error = boilerplateCodeDoc::ParseErrorCode::OK;
 	     message = to_string(error);
 	     return true;
 
     } catch(...) {
-	error = decoupleUserOutput::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
+	error = boilerplateCodeDoc::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
 	message = "Unexpected exception";
 	return false;
     }

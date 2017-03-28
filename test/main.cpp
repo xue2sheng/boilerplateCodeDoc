@@ -8,10 +8,10 @@
 #include <rapidjson/rapidjson.h>
 #include <rapidjson/reader.h>
 
-#include "decoupleUserOutput.h"
+#include "boilerplateCodeDoc.h"
 
 namespace hana = boost::hana;
-namespace decouple = decoupleUserOutput;
+namespace boiler = boilerplateCodeDoc;
 
 // make CTEST_OUTPUT_ON_FAILURE=1 test
 // just logging something ( --log_level=message )
@@ -131,9 +131,9 @@ BOOST_AUTO_TEST_CASE( test002 ) {
    BOOST_TEST_MESSAGE( "current binary=" << binary );
    BOOST_TEST_MESSAGE( "schema.json=" << filename );
 
-   decouple::JsonSchema jsonSchema{filename};
+   boiler::JsonSchema jsonSchema{filename};
    BOOST_TEST_MESSAGE( "Json Schema: " << jsonSchema.message);
-   decouple::JsonSchema2HTML handler {};
+   boiler::JsonSchema2HTML handler {};
    bool result = handler(jsonSchema);
    BOOST_TEST_MESSAGE( "JsonSchema2HTML: " << handler.message << "\n\n" << handler.filtered);
    BOOST_CHECK( result );

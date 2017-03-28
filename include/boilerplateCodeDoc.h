@@ -1,4 +1,4 @@
-/** @file decoupleUserOutput.h
+/** @file boilerplateCodeDoc.h
  * @brief Example of decoupling User Output from the rest of the app.
  *
  * @remark Avoid including any rapidjson header in this file.
@@ -7,16 +7,16 @@
  *
  */
 
-#ifndef DECOUPLEUSEROUTPUT_H
-#define DECOUPLEUSEROUTPUT_H
+#ifndef BOILERPLATECODEDOC_H
+#define BOILERPLATECODEDOC_H
 
 #include <string>
 #include <vector>
 
 /// @brief Decouple User Output for the simple example.
 /// @remark long name on propose in order to avoid name collisions.
-/// @remark an alias might be defined by users as: namespace decouple = decoupleUserOutput;
-namespace decoupleUserOutput {
+/// @remark an alias might be defined by users as: namespace decouple = boilerplateCodeDoc;
+namespace boilerplateCodeDoc {
 
     /// @brief Specific error code.
     enum class ParseErrorCode: unsigned { OK = 0,
