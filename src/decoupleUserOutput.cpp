@@ -176,11 +176,9 @@ static void processProperties(const OneOf& oneOf, const Required& required, Prop
 	}
 }
 
-static std::set<std::string> ignoreSchemaRoot {"description", "title", "$schema", "type"};
+using lambda_t = std::function<void(const Properties&, std::string&)>;
 
-using lambda_t = std::function<void(const OneOf&, const Required&, const Properties&, std::string&)>;
-
-static void SetProperties(const rapidjson::Document& document, std::string element, const std::set<std::string> ignoreSet, std::string& filtered, const lambda_t& lambda)
+static void SetProperties(const rapidjson::Document& document, std::string element, std::string& filtered, const lambda_t& lambda)
 {
     OneOf oneOf {};
     Required required {};
@@ -197,7 +195,6 @@ static void SetProperties(const rapidjson::Document& document, std::string eleme
 
     for(rapidjson::Value::ConstMemberIterator i = pointer->GetObject().MemberBegin(); i != pointer->GetObject().MemberEnd(); ++i) {
         std::string name {i->name.GetString()};
-        if(ignore(name, ignoreSchemaRoot)) { continue; }
         if( name == "oneOf" ) {
             for(auto&& j : object["oneOf"].GetArray()) {
                 Required temp {};
@@ -249,14 +246,13 @@ static void SetProperties(const rapidjson::Document& document, std::string eleme
     }
     processProperties(oneOf, required, properties);
 
-    lambda(oneOf, required, properties, filtered);
+    lambda(properties, filtered);
 
     // recursive call
 
-
 }
 
-static lambda_t html = [](const OneOf& oneOf, const Required& required, const Properties& properties, std::string& filtered)
+static lambda_t html = [](const Properties& properties, std::string& filtered)
 {
     for(const auto& p : properties) {
         filtered += p.second.name
@@ -284,8 +280,8 @@ bool decoupleUserOutput::JsonSchema2HTML::operator()(const decoupleUserOutput::J
 	    }
 
 	     //std::string element {"#/properties/imp/items/properties/native"};
-         std::string element {"#/properties/imp"};
-	     SetProperties(document, element, ignoreSchemaRoot, filtered, html);
+         std::string element {"#"};
+         SetProperties(document, element, filtered, html);
 
 	     error = decoupleUserOutput::ParseErrorCode::OK;
 	     message = to_string(error);
