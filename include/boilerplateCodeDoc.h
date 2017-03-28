@@ -94,7 +94,7 @@ namespace boilerplateCodeDoc {
     struct JsonSchema2HTML final: public JsonSchemaFilter {
 
       ///@brief Default CSS id
-      static constexpr const char* const CSS_ID {"boilerplate"};
+      static constexpr const char* const CSS_CLASS {"boilerplate"};
 
       ///@brief Default HTML head+body header
       static constexpr const char* const HEADER {R"(
@@ -110,8 +110,10 @@ namespace boilerplateCodeDoc {
 	     padding: 5px;
 	     text-align: left;
 	 }
-	 table#boilerplate {
-	     width: 100%;
+	 table.boilerplate {
+	     width: 90%;
+	     margin-left: auto;
+	     margin-right: auto;
 	 }
 	 th {
 	     background-color: #f1f1c1;
@@ -148,14 +150,14 @@ namespace boilerplateCodeDoc {
       )"};
 
       ///@brief simplest constructor
-      JsonSchema2HTML(std::string header_ = HEADER, std::string footer_ = FOOTER, std::string css_id_ = CSS_ID) :
-	      JsonSchemaFilter(header_, footer_),  css_id{std::move(css_id_)} {}
+      JsonSchema2HTML(std::string header_ = HEADER, std::string footer_ = FOOTER, std::string css_class_ = CSS_CLASS) :
+	      JsonSchemaFilter(header_, footer_),  css_class{std::move(css_class_)} {}
 
       ///@brief filter to apply
       bool operator()(const JsonSchema& jsonSchema) override;
 
-      ///@brief css id to be added to generated tables
-      std::string css_id {};
+      ///@brief css class to be added to generated tables
+      std::string css_class {};
     };
 
 } // namespace

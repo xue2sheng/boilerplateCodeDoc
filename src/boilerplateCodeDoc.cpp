@@ -331,7 +331,7 @@ static void SetProperties(const rapidjson::Document& document, std::string eleme
 /****************************************************************************************/
 /****************************************************************************************/
 
-static lambda_t html = [](const Properties& properties, std::string& filtered, std::string& css_id)
+static lambda_t html = [](const Properties& properties, std::string& filtered, std::string& css_class)
 {
   if(properties.size() > 0) {
 
@@ -345,7 +345,7 @@ static lambda_t html = [](const Properties& properties, std::string& filtered, s
     if(not parentTitle.empty() || not bookmark_target.empty()) {
 	filtered += "<h3 id=\"" + bookmark_target + "\">" + parentTitle + "</h3>\n";
     }
-    filtered += "<table id=\"" + css_id + "\">\n";
+    filtered += "<table class=\"" + css_class + "\">\n";
     filtered += "<tr><th>Field<th>Scope</th><th>Type</th><th>Description</th><th>Info</th></tr>\n";
 
     // body
@@ -388,7 +388,7 @@ bool boilerplateCodeDoc::JsonSchema2HTML::operator()(const boilerplateCodeDoc::J
 	    //std::string element {"#/properties/imp/items/properties/native"};
 	    std::string element {"#"};
 	    filtered = header;
-	    SetProperties(document, element, filtered, html, css_id);
+	    SetProperties(document, element, filtered, html, css_class);
 	    filtered += footer;
 
 	    error = boilerplateCodeDoc::ParseErrorCode::OK;
