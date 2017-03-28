@@ -12,8 +12,10 @@
 
 // automatically generate version info
 #include "version.h"
-
 #include "decoupleUserOutput.h"
+
+// debug
+#include <iostream>
 
 static inline std::string to_string(const decoupleUserOutput::ParseErrorCode& error) {
 	    switch(error) {
@@ -135,86 +137,19 @@ struct Property {
 };
 using Properties = std::map<std::string, Property>;
 
-static OneOf collectOneOf(auto&& i) { return OneOf{}; }
-static Required collectRequired(auto&& i)
-{
-	Required result {};
-	if( i.IsArray() ) {
-		for(auto&& j = i.Begin(); j != i.End(); ++j) {
-			result.emplace_back(j->GetString());
-		}
-	}
-	return result;
-}
-
-static bool getPointer(auto&& document, const std::string& element, const std::string& prefix, const std::string& name, const std::string& suffix, std::string& result)
+static bool getString(const rapidjson::Document& document, const std::string& element, const std::string& prefix, const std::string& name, const std::string& suffix, std::string& result)
 {
   // Do nothing if there's nothing to do
   std::string temp {element + prefix + name + suffix};
   if( not rapidjson::Pointer(temp.c_str()).IsValid() ) { return false; }
-  rapidjson::Value* pointer {rapidjson::Pointer(temp.c_str()).Get(document)};
+  const rapidjson::Value* pointer {rapidjson::Pointer(temp.c_str()).Get(document)};
   if( not pointer ) { return false; }
   if( pointer->IsNull() ) { return false; }
   if( not pointer->IsString() ) { return false; }
   result = pointer->GetString();
+  return true;
 }
 
-  std::string type {};
-  if( pointer->HasMember("type") ) {
-	std::string temp2 {temp};
-	temp2 += "/type";
-	if( not rapidjson::Pointer(temp2.c_str()).IsValid() ) { continue; }
-	rapidjson::Value* pointer2 {rapidjson::Pointer(temp2.c_str()).Get(document)};
-	if( not pointer2 ) { continue; }
-	if( pointer2->IsNull() ) { continue; }
-	type = pointer2->GetString();
-  }
-}
-
-static Properties collectProperties(auto&& document, std::string element, auto&& i)
-{
-	Properties result {};
-	if( i.IsObject() ) {
-		for(auto&& j = i.MemberBegin(); j != i.MemberEnd(); ++j) {
-		  std::string name{j->name.GetString()};
-
-		  // Do nothing if there's nothing to do
-		  std::string temp {element};
-		  temp += "/properties/";
-		  temp += name;
-		  if( not rapidjson::Pointer(temp.c_str()).IsValid() ) { continue; }
-		  rapidjson::Value* pointer {rapidjson::Pointer(temp.c_str()).Get(document)};
-		  if( not pointer ) { continue; }
-		  if( pointer->IsNull() ) { continue; }
-
-		  std::string type {};
-		  if( pointer->HasMember("type") ) {
-			std::string temp2 {temp};
-			temp2 += "/type";
-			if( not rapidjson::Pointer(temp2.c_str()).IsValid() ) { continue; }
-			rapidjson::Value* pointer2 {rapidjson::Pointer(temp2.c_str()).Get(document)};
-			if( not pointer2 ) { continue; }
-			if( pointer2->IsNull() ) { continue; }
-			type = pointer2->GetString();
-		  }
-
-		  std::string type {};
-		  if( pointer->HasMember("type") ) {
-			std::string temp2 {temp};
-			temp2 += "/type";
-			if( not rapidjson::Pointer(temp2.c_str()).IsValid() ) { continue; }
-			rapidjson::Value* pointer2 {rapidjson::Pointer(temp2.c_str()).Get(document)};
-			if( not pointer2 ) { continue; }
-			if( pointer2->IsNull() ) { continue; }
-			type = pointer2->GetString();
-		  }
-
-
-		  result.emplace(std::make_pair(name, std::move(Property{false, name, type, description})));
-		}
-	}
-	return result;
-}
 static void processProperties(const OneOf& oneOf, const Required& required, Properties& properties)
 {
 	if( oneOf.size() > 0 ) {
@@ -240,14 +175,16 @@ static void processProperties(const OneOf& oneOf, const Required& required, Prop
 
 static std::set<std::string> ignoreSchemaRoot {"description", "title", "$schema", "type"};
 
-static auto html = [](const OneOf& oneOf, const Required& required, const Properties& properties, std::string& filtered)
+using lambda_t = std::function<void(const OneOf&, const Required&, const Properties&, std::string&)>;
+
+static lambda_t html = [](const OneOf& oneOf, const Required& required, const Properties& properties, std::string& filtered)
 {
     for(const auto& p : properties) { filtered += p.second.name
 			    + (p.second.required?"<required>":"")
 			    + "{" + p.second.type + "}\n"; }
 };
 
-static void SetProperties(auto&& document, std::string element, const std::set<std::string> ignoreSet, std::string& filtered, auto lambda)
+static void SetProperties(const rapidjson::Document& document, std::string element, const std::set<std::string> ignoreSet, std::string& filtered, const lambda_t& lambda)
 {
     OneOf oneOf {};
     Required required {};
@@ -255,19 +192,34 @@ static void SetProperties(auto&& document, std::string element, const std::set<s
 
     // Do nothing if there's nothing to do
     if( not rapidjson::Pointer(element.c_str()).IsValid() ) { return; }
-    rapidjson::Value* pointer {rapidjson::Pointer(element.c_str()).Get(document)};
+    const rapidjson::Value* pointer {rapidjson::Pointer(element.c_str()).Get(document)};
     if( not pointer ) { return; }
     if( pointer->IsNull() ) { return; }
     if( not pointer->IsObject() ) { return; }
 
-    const rapidjson::Value::Object object {pointer->GetObject()};
+    auto&& object {pointer->GetObject()};
 
-    for(auto&& i = object.MemberBegin(); i != object.MemberEnd(); ++i) {
-	std::string name {i->name.GetString()};
-	if(ignore(name, ignoreSchemaRoot)) { continue; }
-	if( name == "oneOf" ) { oneOf = collectOneOf(object["oneOf"]); }
-	if( name == "required" ) { required = collectRequired(object["required"]); }
-	if( name == "properties" ) { properties = collectProperties(document, element, object["properties"]); }
+    for(rapidjson::Value::ConstMemberIterator i = pointer->GetObject().MemberBegin(); i != pointer->GetObject().MemberEnd(); ++i) {
+        std::string name {i->name.GetString()};
+        if(ignore(name, ignoreSchemaRoot)) { continue; }
+        if( name == "oneOf" ) {
+        } else if( name == "required" ) {
+            for(auto&& j : object["required"].GetArray()) {
+                required.emplace_back(std::string{j.GetString()});
+            }
+        } else if( name == "properties" ) {
+            for(auto&& j = object["properties"].MemberBegin(); j != object["properties"].MemberEnd(); ++j) {
+              std::string name{j->name.GetString()};
+
+              std::string type {}; // required
+              if(not getString(document, element, "/properties/", name, "/type", type)) { continue; }
+
+              std::string description {}; // optional
+              getString(document, element, "/properties/", name, "/description", description);
+
+              properties.emplace(std::make_pair(name, Property{false, name, type, description}));
+            }
+        }
     }
     processProperties(oneOf, required, properties);
 

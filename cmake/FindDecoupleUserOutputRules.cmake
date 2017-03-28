@@ -90,7 +90,7 @@ endif()
 if(APPLE)
    set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
    project(${LOCAL_CMAKE_PROJECT_NAME} CXX)
-   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -std=c++14 -g -stdlib=libc++")
+   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -std=c++1z -g -stdlib=libc++")
    set(STATIC_LIB_LINKER "-lc++ -lc++abi") # not really static
    set(STATIC_LIB_PATH "") # not really static
 elseif(UNIX)
