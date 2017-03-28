@@ -1,4 +1,10 @@
-# Decouple User Output
+# Boilerplate Code and Documentation
+
+At Backend there are often boilerplate code and documentation that could be generated and kept almost automatically updated. That might spare not only a lot of time/pain when it comes down to maintainance and testing, but also produce better documentation for Frontend/Customer parties. 
+
+![Boilerplate](/images/boilerplate.jpeg)
+
+## Decouple User Output
 
 Humble attempt to dissociate Backend generated data/schemas from friendly user Frontend formats
 
@@ -45,7 +51,7 @@ FD -- (choose specific\noutput format)
 -->
 ![Diagram](/images/diagram.png)
 
-## Example: Tech Json Schema Info into User-Friendly HTML table
+### Example: Tech Json Schema Info into User-Friendly HTML table
 
 Customer is more used to **read** HTML than hairy, lengthy *Json Schema* raw files. So we'd better to provided that expected format in order to get some **constructive feedback** from them.
 
