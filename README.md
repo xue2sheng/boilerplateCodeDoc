@@ -70,7 +70,7 @@ rectangle BackendServer {
 (file\nread) .> (structured\ndata)
 BD -- (adding\ngeneric\nformat info)
 (structured\ndata) .> (adding\ngeneric\nformat info)
-(adding\ngeneric\nformat info) .> (MARKDOWN/TEXT)
+(adding\ngeneric\nformat info) .> (SIMPLY HTML)
 }
 
 cloud FileSystem {
@@ -79,7 +79,7 @@ cloud FileSystem {
 
 
 rectangle FrontendServer {
-(MARKDOWN/TEXT) .> (choose specific\nCSS)
+(SIMPLY HTML) .> (choose specific\nCSS)
 (user output\nHTML\CSS) .> Customer
 (apply chosen format) .> (user output\nHTML\CSS)
 (choose specific\nCSS) .> (apply chosen format)

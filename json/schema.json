@@ -3,21 +3,23 @@
   "title": "Complex Json Schema example",
   "description": "version 0.0.1",
   "type": "object",
+  "metatype": "struct Data",
   "properties": {
     "test": {
       "type": "integer",
+      "metatype": "unsigned int",
       "minimum": 0,
       "maximum": 1,
       "default": 0
     },
     "id": {
-      "type": "string"
+      "type": "string",
+      "metatype": "std::string"
     },
     "imp": {
       "description": "Impressions rock",
       "type": "array",
       "metatype": "std::vector<Impression>",
-      "metainfo": "implemented",
       "bookmarkSource": "#impression",
       "items": {
         "title": "Impression",

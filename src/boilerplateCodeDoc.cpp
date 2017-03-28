@@ -142,13 +142,14 @@ struct Property {
     std::string title {};
     std::string parentTitle {};
     std::string metatype {};
+    std::string parentMetatype {};
     std::string metainfo {};
     std::string bookmark_source {};
     std::string bookmark_target {};
     Property(bool req, std::string sco, std::string nam, std::string typ, std::string des, std::string tit,
-	     std::string par, std::string met, std::string inf, std::string bs, std::string bt)
+	     std::string par, std::string met, std::string pm, std::string inf, std::string bs, std::string bt)
 	: required{req}, scope{std::move(sco)}, name{std::move(nam)}, type{std::move(typ)}, description{std::move(des)}, title{std::move(tit)},
-	  parentTitle{std::move(par)}, metatype{std::move(met)}, metainfo{std::move(inf)},
+	  parentTitle{std::move(par)}, metatype{std::move(met)}, parentMetatype{std::move(pm)}, metainfo{std::move(inf)},
 	  bookmark_source{std::move(bs)}, bookmark_target{std::move(bt)} {}
 };
 using Properties = std::map<std::string, Property>;
@@ -248,8 +249,10 @@ static void SetProperties(const rapidjson::Document& document, std::string eleme
               getString(document, element, "/properties/", name, "/title", title);
               std::string parentTitle {}; // optional
               getString(document, element, "", "", "/title", parentTitle);
-	      std::string metatype {}; // optional
-	      getString(document, element, "/properties/", name, "/metatype", metatype);
+	      std::string parentMetatype {}; // required
+	      if(not getString(document, element, "", "", "/metatype", parentMetatype)) { continue; }
+	      std::string metatype {}; // required
+	      if(not getString(document, element, "/properties/", name, "/metatype", metatype)) { continue; }
 	      std::string metainfo {}; // optional
 	      getString(document, element, "/properties/", name, "/metainfo", metainfo);
 	      std::string scope {}; // optional
@@ -259,7 +262,7 @@ static void SetProperties(const rapidjson::Document& document, std::string eleme
 	      std::string bookmark_target {}; // optional
 	      getString(document, element, "", "", "/bookmarkTarget", bookmark_target);
 	      properties.emplace(std::make_pair(name, Property{false, scope, name, type, description, title,
-							       parentTitle, metatype, metainfo, bookmark_source, bookmark_target}));
+							       parentTitle, metatype, parentMetatype, metainfo, bookmark_source, bookmark_target}));
             }
 
             nextElement = element + "/properties/"; // recursive call
@@ -277,6 +280,8 @@ static void SetProperties(const rapidjson::Document& document, std::string eleme
 	      getString(document, element, "/items/properties/", name, "/title", title);
               std::string parentTitle {}; // optional
 	      getString(document, element, "/items", "", "/title", parentTitle);
+	      std::string parentMetatype {}; // optional
+	      getString(document, element, "/items", "", "/metatype", parentMetatype);
 	      std::string metatype {}; // optional
 	      getString(document, element, "/items/properties/", name, "/metatype", metatype);
 	      std::string metainfo {}; // optional
@@ -288,7 +293,7 @@ static void SetProperties(const rapidjson::Document& document, std::string eleme
 	      std::string bookmark_target {}; // optional
 	      getString(document, element, "/items", "", "/bookmarkTarget", bookmark_target);
 	      properties.emplace(std::make_pair(name, Property{false, scope, name, type, description, title,
-							       parentTitle, metatype, metainfo, bookmark_source, bookmark_target}));
+							       parentTitle, metatype, parentMetatype, metainfo, bookmark_source, bookmark_target}));
             }
 
             nextElement = element + "/items/properties/"; // recursive call
@@ -389,6 +394,73 @@ bool boilerplateCodeDoc::JsonSchema2HTML::operator()(const boilerplateCodeDoc::J
 	    std::string element {"#"};
 	    filtered = header;
 	    SetProperties(document, element, filtered, html, css_class);
+	    filtered += footer;
+
+	    error = boilerplateCodeDoc::ParseErrorCode::OK;
+	    message = to_string(error);
+	    return true;
+
+    } catch(...) {
+	error = boilerplateCodeDoc::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
+	message = "Unexpected exception";
+	return false;
+    }
+}
+
+/****************************************************************************************/
+/****************************************************************************************/
+/****************************************************************************************/
+/*********************** ACTUAL LOGIC CODE **********************************************/
+/****************************************************************************************/
+/****************************************************************************************/
+/****************************************************************************************/
+
+static lambda_t cpp = [](const Properties& properties, std::string& filtered, std::string& namespace_id)
+{
+  if(properties.size() > 0) {
+
+    // supposed metatype is a must
+    std::string parentMetatype {};
+    if( properties.size() > 0) {
+	parentMetatype = properties.begin()->second.parentMetatype;
+    }
+    if( parentMetatype.empty() ) { return; } // required
+
+    for(const auto& p : properties) {
+
+	    std::string metatype {p.second.metatype};
+	    if( metatype.empty() ) { return; } // required
+
+	    filtered += "\nparentMetatype: " + p.second.parentMetatype;
+	    filtered += "\nname: " + p.second.name;
+	    filtered += "\nmetatype: " + p.second.metatype;
+	    filtered += "\ndescription: " + p.second.description;
+	    filtered += "\n\n";
+    }
+
+  }
+};
+
+bool boilerplateCodeDoc::JsonSchema2CPP::operator()(const boilerplateCodeDoc::JsonSchema& jsonSchema)
+{
+    if( not jsonSchema.document_ptr ) {
+	error = boilerplateCodeDoc::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
+	message = "Empty document pointer";
+	return false;
+    }
+
+    rapidjson::Document& document {*reinterpret_cast<rapidjson::Document*>(jsonSchema.document_ptr)};
+    try {
+	    if(document.IsNull() || not document.IsObject() ) {
+		error = boilerplateCodeDoc::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
+		message = "Root element shouldn't be NULL";
+		return false;
+	    }
+
+	    //std::string element {"#/properties/imp/items/properties/native"};
+	    std::string element {"#"};
+	    filtered = header;
+	    SetProperties(document, element, filtered, cpp, namespace_id);
 	    filtered += footer;
 
 	    error = boilerplateCodeDoc::ParseErrorCode::OK;
