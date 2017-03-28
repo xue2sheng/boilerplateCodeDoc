@@ -180,8 +180,8 @@ using lambda_t = std::function<void(const OneOf&, const Required&, const Propert
 static lambda_t html = [](const OneOf& oneOf, const Required& required, const Properties& properties, std::string& filtered)
 {
     for(const auto& p : properties) { filtered += p.second.name
-			    + (p.second.required?"<required>":"")
-			    + "{" + p.second.type + "}\n"; }
+                + (p.second.required?"<required>":"")
+                + "{" + p.second.type + "}\n"; }
 };
 
 static void SetProperties(const rapidjson::Document& document, std::string element, const std::set<std::string> ignoreSet, std::string& filtered, const lambda_t& lambda)
@@ -203,6 +203,12 @@ static void SetProperties(const rapidjson::Document& document, std::string eleme
         std::string name {i->name.GetString()};
         if(ignore(name, ignoreSchemaRoot)) { continue; }
         if( name == "oneOf" ) {
+            for(auto&& j : object["oneOf"].GetArray()) {
+                Required temp {};
+                for(auto&& k : j["required"].GetArray()) {
+                   temp.emplace_back(std::string{k.GetString()});
+                }
+            }
         } else if( name == "required" ) {
             for(auto&& j : object["required"].GetArray()) {
                 required.emplace_back(std::string{j.GetString()});
@@ -210,13 +216,20 @@ static void SetProperties(const rapidjson::Document& document, std::string eleme
         } else if( name == "properties" ) {
             for(auto&& j = object["properties"].MemberBegin(); j != object["properties"].MemberEnd(); ++j) {
               std::string name{j->name.GetString()};
-
               std::string type {}; // required
               if(not getString(document, element, "/properties/", name, "/type", type)) { continue; }
-
               std::string description {}; // optional
               getString(document, element, "/properties/", name, "/description", description);
-
+              properties.emplace(std::make_pair(name, Property{false, name, type, description}));
+            }
+        } else if( name == "items" ) {
+             auto&& items {object["items"]["properties"].GetObject()};
+             for(auto&& j = items.MemberBegin(); j != items.MemberEnd(); ++j) {
+              std::string name{j->name.GetString()};
+              std::string type {}; // required
+              if(not getString(document, element, "/items/properties/", name, "/type", type)) { continue; }
+              std::string description {}; // optional
+              getString(document, element, "/items/properties/", name, "/description", description);
               properties.emplace(std::make_pair(name, Property{false, name, type, description}));
             }
         }
@@ -247,7 +260,7 @@ bool decoupleUserOutput::JsonSchema2HTML::operator()(const decoupleUserOutput::J
 	    }
 
 	     //std::string element {"#/properties/imp/items/properties/native"};
-	     std::string element {"#"};
+         std::string element {"#/properties/imp"};
 	     SetProperties(document, element, ignoreSchemaRoot, filtered, html);
 
 	     error = decoupleUserOutput::ParseErrorCode::OK;
