@@ -441,7 +441,9 @@ return boilerplateOperator(jsonSchema, *this, jsonSchema.namespace_id, [](const 
     }
     if( parentMetatype.empty() ) { return; } // required
 
-    std::string addition = "\n" + parentMetatype + " {\n";
+    std::string addition {};
+    if( not namespace_id.empty() ) { addition += "namespace " + namespace_id + " {\n"; }
+    addition += "\n" + parentMetatype + " {\n\n";
 
     for(const auto& p : properties) {
 
@@ -454,7 +456,8 @@ return boilerplateOperator(jsonSchema, *this, jsonSchema.namespace_id, [](const 
 	    addition += metatype + " " + name + " {};\n";
     }
 
-    addition += "};"; // parentMetatype
+    addition += "\n}; // " + parentMetatype + "\n";
+    if( not namespace_id.empty() ) { addition += "\n} // namespace " + namespace_id + "\n"; }
 
     filtered = addition + filtered;
   }

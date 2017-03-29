@@ -3,7 +3,7 @@
   "title": "Complex Json Schema example",
   "description": "version 0.0.1",
   "type": "object",
-  "namespace": "boilerplateExample",
+  "namespace": "boilerplate::Example",
   "cssClass": "boilerplateExample",
   "metatype": "struct Data",
   "properties": {
