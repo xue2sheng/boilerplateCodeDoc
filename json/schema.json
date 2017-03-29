@@ -27,41 +27,51 @@
         "title": "Impression",
         "bookmarkTarget": "impression",
         "type": "object",
+        "metatype" : "struct Impression",
         "properties": {
           "id": {
-            "type": "string"
+            "type": "string",
+            "metatype": "std::string"
           },
           "banner": {
             "type": "object",
+            "metatype" : "struct Banner",
             "metainfo": "not implemented",
             "scope": "required for banner impressions"
           },
           "audio": {
             "type": "object",
+            "metatype" : "struct Audio",
             "metainfo": "not implemented",
             "scope": "required for audio impressions"
           },
           "video": {
             "type": "object",
+            "metatype" : "struct Video",
             "metainfo": "not implemented",
             "scope": "required for video impressions"
           },
           "native": {
             "title" : "Native",
+            "metatype" : "struct Native",
             "type": "object",
             "scope": "required for native impressions",
             "properties": {
               "request": {
-                "type": "string"
+                "type": "string",
+                "metatype": "std::string"
               },
               "ver": {
                 "type": "string",
+                "metatype": "std::string",
                 "default": "1.1"
               },
               "api": {
                 "type": "array",
+                "metatype": "std::vector<unsigned int>",
                 "items": {
-                  "type": "integer"
+                  "type": "integer",
+                  "metatype": "unsigned int"
                 }
               }
             },
@@ -72,44 +82,54 @@
           "pmp": {
             "title" : "PMP",
             "type": "object",
+            "metatype": "struct PMP",
             "properties": {
               "private_auction": {
                 "type": "integer",
+                "metatype": "unsigned int",
                 "minimum": 0,
                 "maximum": 1,
                 "default": 0
               },
               "deals": {
                 "type": "array",
+                "metatype": "std::vector<Deal>",
                 "items": {
                   "title": "Deal",
                   "type": "object",
+                  "metatype": "struct Deal",
                   "properties": {
                     "id": {
-                      "type": "string"
+                      "type": "string",
+                      "metatype": "std::string"
                     },
                     "bidfloor": {
                       "type": "number",
+                      "metatype": "double",
                       "minimum": 0.0,
                       "default": 0.0
                     },
                     "bidfloorcur": {
                       "type": "string",
+                      "metatype": "std::string",
                       "enum": [
                         "USD"
                       ]
                     },
                     "at": {
-                      "type": "integer"
+                      "type": "integer",
+                      "metatype": "int"
                     },
                     "wseat": {
                       "type": "array",
+                      "metatype": "std::vector<std::string>",
                       "items": {
                         "type": "string"
                       }
                     },
                     "wadomain": {
                       "type": "array",
+                      "metatype": "std::vector<std::string>",
                       "items": {
                         "type": "string"
                       }
@@ -124,58 +144,70 @@
             }
           },
           "displaymanager": {
-            "type": "string"
+            "type": "string",
+            "metatype": "std::string"
           },
           "displaymanagerver": {
-            "type": "string"
+            "type": "string",
+            "metatype": "std::string"
           },
           "instl": {
             "type": "integer",
+            "metatype": "unsigned int",
             "minimum": 0,
             "maximum": 1,
             "default": 0
           },
           "tagid": {
-            "type": "string"
+            "type": "string",
+            "metatype": "std::string"
           },
           "bidfloor": {
             "type": "number",
+            "metatype": "double",
             "minimum": 0.0,
             "default": 0.0
           },
           "bidfloorcur": {
             "type": "string",
+            "metatype": "std::string",
             "enum": [
               "USD"
             ]
           },
           "clickbrowser": {
             "type": "integer",
+            "metatype": "unsigned int",
             "minimum": 0,
             "maximum": 1,
             "default": 0
           },
           "secure": {
             "type": "integer",
+            "metatype": "unsigned int",
             "minimum": 0,
             "maximum": 1,
             "default": 0
           },
           "iframabuster": {
             "type": "array",
+            "metatype": "std::vector<std::string>",
             "items": {
               "type": "string"
             }
           },
           "exp": {
-            "type": "integer"
+            "type": "integer",
+            "metatype": "int"
           },
           "ext": {
             "title": "Extension",
             "type": "object",
+            "metatype": "struct Extension",
             "properties": {
               "strictbannersize": {
                 "type": "integer",
+                "metatype": "unsigned int",
                 "minimum": 0,
                 "maximum": 1,
                 "default": 0

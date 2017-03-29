@@ -457,7 +457,7 @@ return boilerplateOperator(jsonSchema, *this, jsonSchema.namespace_id, [](const 
     }
 
     addition += "\n}; // " + parentMetatype + "\n";
-    if( not namespace_id.empty() ) { addition += "\n} // namespace " + namespace_id + "\n"; }
+    if( not namespace_id.empty() ) { addition += "\n} // namespace " + namespace_id + "\n\n"; }
 
     filtered = addition + filtered;
   }
