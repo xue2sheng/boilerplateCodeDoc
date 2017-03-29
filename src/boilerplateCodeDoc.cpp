@@ -369,6 +369,21 @@ static bool boilerplateOperator(const boilerplateCodeDoc::JsonSchema& jsonSchema
     }
 }
 
+static bool implemented(const std::string& metainfo)
+{
+	if( metainfo.empty() ) { return true; } // empty candidates are supposedly implemented
+
+	// Look for exact matches
+	static std::set<std::string> NOT_IMPLEMENTED {"not implemented", "Not Implemented", "Not implemented", "NOT IMPLEMENTED"};
+	if( NOT_IMPLEMENTED.end() != NOT_IMPLEMENTED.find(metainfo) ) { return false; }
+
+	// Look for partial matches
+	for(const auto& s : NOT_IMPLEMENTED) { if( metainfo.find(s) != std::string::npos ) { return false; } }
+
+	// Implemented because we got any hint
+	return true;
+}
+
 /****************************************************************************************/
 /****************************************************************************************/
 /****************************************************************************************/
@@ -436,16 +451,26 @@ return boilerplateOperator(jsonSchema, *this, jsonSchema.namespace_id, [](const 
 
     // supposed metatype is a must
     std::string parentMetatype {};
-    if( properties.size() > 0) {
-	parentMetatype = properties.begin()->second.parentMetatype;
-    }
+    parentMetatype = properties.begin()->second.parentMetatype;
     if( parentMetatype.empty() ) { return; } // required
+
+    // if nothing is implemented, do nothing
+    bool nothing_implemented {true};
+    for(const auto& p : properties) {
+	if( implemented(p.second.metainfo) ) { nothing_implemented = false; break; }
+    }
+    if( nothing_implemented ) {
+	    filtered = "\n// " + parentMetatype + ": all their properties are not implemented\n\n" + filtered;
+	    return;
+    }
 
     std::string addition {};
     if( not namespace_id.empty() ) { addition += "namespace " + namespace_id + " {\n"; }
     addition += "\n" + parentMetatype + " {\n\n";
 
     for(const auto& p : properties) {
+
+	    if( not implemented(p.second.metainfo) ) { addition += "// " + p.second.name + ": " + p.second.metainfo + "\n"; continue; }
 
 	    std::string metatype {p.second.metatype};
 	    if( metatype.empty() ) { continue; } // required
