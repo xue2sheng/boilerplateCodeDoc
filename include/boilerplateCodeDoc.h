@@ -48,20 +48,24 @@ namespace boilerplateCodeDoc {
       void* document_ptr {nullptr};
 
       ///@brief Json Schema title
-      ///@remarks for debugging
+      ///@remark for debugging
       std::string title {};
 
       ///@brief Json Schema description
-      ///@remarks for debugging
+      ///@remark for debugging
       std::string description {};
 
       ///@brief External definition of optional CSS class for HTML filters
-      /// @remarks Although needed by another class, it's very handy to grab that piece of info here
+      /// @remark Although needed by another class, it's very handy to grab that piece of info here
       std::string css_class {};
 
       /// @brief External definition of optional namespace for C++ filters
-      /// @remarks Although needed by another class, it's very handy to grab that piece of info here
+      /// @remark Although needed by another class, it's very handy to grab that piece of info here
       std::string namespace_id {};
+
+      /// @brief Expected C++ header file name to save automatically generated code
+      /// @remark Although needed by another class, it's very handy to grab that piece of info here
+      std::string header_filename {};
     };
 
 
@@ -182,11 +186,24 @@ namespace boilerplateCodeDoc {
       /// @remark to be used as extra parameter
       static constexpr const char* const NAMESPACE {"boilerplateExample"};
 
-      // TODO
-      static constexpr const char* const HEADER {""};
+      // Expected to be added the name of the header
+      // /** @file XXXXXXX.h
+      static constexpr const char* const HEADER {R"(
+	* @brief Example of automatically generated code.
+	* @remark Avoid including any rapidjson header in this file.
+	*
+	* @bug Abuse of JSON Schema validation leads to crushes if an invalid json is queried (missing redundant checks to speed up).
+	*
+	*/
+      #pragma once
+      #include <string>
+      #include <vector>
+      #include <sstream>
+
+       )"};
 
       // TODO
-      static constexpr const char* const FOOTER {""};
+      static constexpr const char* const FOOTER {"\n\n// END: automatically generated code\n"};
 
       ///@brief simplest constructor
       JsonSchema2CPP(std::string extra_ = NAMESPACE, std::string header_ = HEADER, std::string footer_ = FOOTER) :

@@ -115,6 +115,9 @@ boilerplateCodeDoc::JsonSchema::JsonSchema(std::string filename)
 			     if( document.HasMember("cssClass") ) {
 				      css_class = document["cssClass"].GetString();
 			      }
+			     if( document.HasMember("headerFileName") ) {
+				      header_filename = document["headerFileName"].GetString();
+			      }
 
 			     error = boilerplateCodeDoc::ParseErrorCode::OK;
 			     message = to_string(error);
@@ -353,10 +356,9 @@ static bool boilerplateOperator(const boilerplateCodeDoc::JsonSchema& jsonSchema
 
 	    //std::string element {"#/properties/imp/items/properties/native"};
 	    std::string element {"#"};
-	    filter.filtered = filter.header;
 	    std::string filter_extra {(extra.empty()?filter.extra:extra)};
 	    SetProperties(document, element, filter.filtered, lambda, filter_extra );
-	    filter.filtered += filter.footer;
+	    filter.filtered = filter.header + filter.filtered + filter.footer;
 
 	    filter.error = boilerplateCodeDoc::ParseErrorCode::OK;
 	    filter.message = to_string(filter.error);
@@ -445,6 +447,7 @@ return boilerplateOperator(jsonSchema, *this, jsonSchema.css_class, [](const Pro
 
 bool boilerplateCodeDoc::JsonSchema2CPP::operator()(const boilerplateCodeDoc::JsonSchema& jsonSchema)
 {
+if( not jsonSchema.header_filename.empty() && not header.empty() ) { header = "/** @file " + jsonSchema.header_filename + header; }
 return boilerplateOperator(jsonSchema, *this, jsonSchema.namespace_id, [](const Properties& properties, std::string& filtered, std::string& namespace_id) {
 
   if(properties.size() > 0) {
