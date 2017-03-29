@@ -94,23 +94,30 @@ boilerplateCodeDoc::JsonSchema::JsonSchema(std::string filename)
 				message = "Missing expected $schema root object";
 				return;
 			     }
-			      if( not document.HasMember("title") ) {
+			     if( not document.HasMember("title") ) {
 				error = boilerplateCodeDoc::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
 				message = "Missing expected schema title";
 				return;
 			     }
 
-			      if( not document.HasMember("description") ) {
+			     if( not document.HasMember("description") ) {
 				error = boilerplateCodeDoc::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
 				message = "Missing expected schema description";
 				return;
 			     }
 
-			      title = document["title"].GetString();
-			      description = document["description"].GetString();
+			     title = document["title"].GetString();
+			     description = document["description"].GetString();
 
-			      error = boilerplateCodeDoc::ParseErrorCode::OK;
-			      message = to_string(error);
+			     if( document.HasMember("namespace") ) {
+				      namespace_id = document["namespace"].GetString();
+			      }
+			     if( document.HasMember("cssClass") ) {
+				      css_class = document["cssClass"].GetString();
+			      }
+
+			     error = boilerplateCodeDoc::ParseErrorCode::OK;
+			     message = to_string(error);
 
 		     } else {
 			error = boilerplateCodeDoc::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
@@ -327,7 +334,8 @@ static void SetProperties(const rapidjson::Document& document, std::string eleme
 
 }
 
-static bool boilerplateOperator(const boilerplateCodeDoc::JsonSchema& jsonSchema, boilerplateCodeDoc::JsonSchemaFilter& filter, const lambda_t& lambda)
+static bool boilerplateOperator(const boilerplateCodeDoc::JsonSchema& jsonSchema, boilerplateCodeDoc::JsonSchemaFilter& filter,
+				const std::string& extra, const lambda_t& lambda)
 {
     if( not jsonSchema.document_ptr ) {
 	filter.error = boilerplateCodeDoc::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
@@ -346,7 +354,8 @@ static bool boilerplateOperator(const boilerplateCodeDoc::JsonSchema& jsonSchema
 	    //std::string element {"#/properties/imp/items/properties/native"};
 	    std::string element {"#"};
 	    filter.filtered = filter.header;
-	    SetProperties(document, element, filter.filtered, lambda, filter.extra);
+	    std::string filter_extra {(extra.empty()?filter.extra:extra)};
+	    SetProperties(document, element, filter.filtered, lambda, filter_extra );
 	    filter.filtered += filter.footer;
 
 	    filter.error = boilerplateCodeDoc::ParseErrorCode::OK;
@@ -370,7 +379,7 @@ static bool boilerplateOperator(const boilerplateCodeDoc::JsonSchema& jsonSchema
 
 bool boilerplateCodeDoc::JsonSchema2HTML::operator()(const boilerplateCodeDoc::JsonSchema& jsonSchema)
 {
-return boilerplateOperator(jsonSchema, *this, [](const Properties& properties, std::string& filtered, std::string& css_class) {
+return boilerplateOperator(jsonSchema, *this, jsonSchema.css_class, [](const Properties& properties, std::string& filtered, std::string& css_class) {
 
   if(properties.size() > 0) {
 
@@ -380,6 +389,7 @@ return boilerplateOperator(jsonSchema, *this, [](const Properties& properties, s
     for(const auto& p : properties) {
 	if( not p.second.parentTitle.empty() ) { parentTitle = p.second.parentTitle; }
 	if( not p.second.bookmark_target.empty() ) { bookmark_target = p.second.bookmark_target; }
+	if( not p.second.parentTitle.empty() && not p.second.bookmark_target.empty() ) { break; }
     }
     if(not parentTitle.empty() || not bookmark_target.empty()) {
 	filtered += "<h3 id=\"" + bookmark_target + "\">" + parentTitle + "</h3>\n";
@@ -420,7 +430,7 @@ return boilerplateOperator(jsonSchema, *this, [](const Properties& properties, s
 
 bool boilerplateCodeDoc::JsonSchema2CPP::operator()(const boilerplateCodeDoc::JsonSchema& jsonSchema)
 {
-return boilerplateOperator(jsonSchema, *this, [](const Properties& properties, std::string& filtered, std::string& namespace_id) {
+return boilerplateOperator(jsonSchema, *this, jsonSchema.namespace_id, [](const Properties& properties, std::string& filtered, std::string& namespace_id) {
 
   if(properties.size() > 0) {
 
@@ -431,18 +441,22 @@ return boilerplateOperator(jsonSchema, *this, [](const Properties& properties, s
     }
     if( parentMetatype.empty() ) { return; } // required
 
+    std::string addition = "\n" + parentMetatype + " {\n";
+
     for(const auto& p : properties) {
 
 	    std::string metatype {p.second.metatype};
-	    if( metatype.empty() ) { return; } // required
+	    if( metatype.empty() ) { continue; } // required
+	    std::string name {p.second.name};
+	    if( name.empty() ) { continue; } // required
 
-	    filtered += "\nparentMetatype: " + p.second.parentMetatype;
-	    filtered += "\nname: " + p.second.name;
-	    filtered += "\nmetatype: " + p.second.metatype;
-	    filtered += "\ndescription: " + p.second.description;
-	    filtered += "\n\n";
+	    if( not p.second.description.empty() ) { addition += "///@ brief " + p.second.description + "\n"; }
+	    addition += metatype + " " + name + " {};\n";
     }
 
+    addition += "};"; // parentMetatype
+
+    filtered = addition + filtered;
   }
 
 }); // return boilerplateOperator

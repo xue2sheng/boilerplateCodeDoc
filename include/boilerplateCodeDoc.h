@@ -54,6 +54,14 @@ namespace boilerplateCodeDoc {
       ///@brief Json Schema description
       ///@remarks for debugging
       std::string description {};
+
+      ///@brief External definition of optional CSS class for HTML filters
+      /// @remarks Although needed by another class, it's very handy to grab that piece of info here
+      std::string css_class {};
+
+      /// @brief External definition of optional namespace for C++ filters
+      /// @remarks Although needed by another class, it's very handy to grab that piece of info here
+      std::string namespace_id {};
     };
 
 
@@ -64,8 +72,8 @@ namespace boilerplateCodeDoc {
       virtual ~JsonSchemaFilter() = default;
 
       ///@brief simplest consturctor
-      JsonSchemaFilter(std::string header_ = "", std::string footer_ = "", std::string extra_ = "")
-	      : header{std::move(header_)}, footer{std::move(footer_)}, extra{std::move(extra_)} {}
+      JsonSchemaFilter(std::string extra_ = "", std::string header_ = "", std::string footer_ = "")
+	      : extra{std::move(extra_)}, header{std::move(header_)}, footer{std::move(footer_)} {}
 
       ///@brief Error code
       ParseErrorCode error {ParseErrorCode::OK};
@@ -156,8 +164,8 @@ namespace boilerplateCodeDoc {
       )"};
 
       ///@brief simplest constructor
-      JsonSchema2HTML(std::string header_ = HEADER, std::string footer_ = FOOTER, std::string extra_ = CSS_CLASS) :
-	      JsonSchemaFilter(header_, footer_, extra_) {}
+      JsonSchema2HTML(std::string extra_ = CSS_CLASS, std::string header_ = HEADER, std::string footer_ = FOOTER) :
+	      JsonSchemaFilter(extra_, header_, footer_) {}
 
       ///@brief filter to apply
       bool operator()(const JsonSchema& jsonSchema) override;
@@ -181,8 +189,8 @@ namespace boilerplateCodeDoc {
       static constexpr const char* const FOOTER {""};
 
       ///@brief simplest constructor
-      JsonSchema2CPP(std::string header_ = HEADER, std::string footer_ = FOOTER, std::string extra_ = NAMESPACE) :
-	      JsonSchemaFilter(header_, footer_, extra_) {}
+      JsonSchema2CPP(std::string extra_ = NAMESPACE, std::string header_ = HEADER, std::string footer_ = FOOTER) :
+	      JsonSchemaFilter(extra_, header_, footer_) {}
 
       ///@brief filter to apply
       bool operator()(const JsonSchema& jsonSchema) override;
