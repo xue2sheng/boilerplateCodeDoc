@@ -327,6 +327,38 @@ static void SetProperties(const rapidjson::Document& document, std::string eleme
 
 }
 
+static bool boilerplateOperator(const boilerplateCodeDoc::JsonSchema& jsonSchema, boilerplateCodeDoc::JsonSchemaFilter& filter, const lambda_t& lambda)
+{
+    if( not jsonSchema.document_ptr ) {
+	filter.error = boilerplateCodeDoc::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
+	filter.message = "Empty document pointer";
+	return false;
+    }
+
+    rapidjson::Document& document {*reinterpret_cast<rapidjson::Document*>(jsonSchema.document_ptr)};
+    try {
+	    if(document.IsNull() || not document.IsObject() ) {
+		filter.error = boilerplateCodeDoc::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
+		filter.message = "Root element shouldn't be NULL";
+		return false;
+	    }
+
+	    //std::string element {"#/properties/imp/items/properties/native"};
+	    std::string element {"#"};
+	    filter.filtered = filter.header;
+	    SetProperties(document, element, filter.filtered, lambda, filter.extra);
+	    filter.filtered += filter.footer;
+
+	    filter.error = boilerplateCodeDoc::ParseErrorCode::OK;
+	    filter.message = to_string(filter.error);
+	    return true;
+
+    } catch(...) {
+	filter.error = boilerplateCodeDoc::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
+	filter.message = "Unexpected exception";
+	return false;
+    }
+}
 
 /****************************************************************************************/
 /****************************************************************************************/
@@ -336,8 +368,10 @@ static void SetProperties(const rapidjson::Document& document, std::string eleme
 /****************************************************************************************/
 /****************************************************************************************/
 
-static lambda_t html = [](const Properties& properties, std::string& filtered, std::string& css_class)
+bool boilerplateCodeDoc::JsonSchema2HTML::operator()(const boilerplateCodeDoc::JsonSchema& jsonSchema)
 {
+return boilerplateOperator(jsonSchema, *this, [](const Properties& properties, std::string& filtered, std::string& css_class) {
+
   if(properties.size() > 0) {
 
     // header
@@ -372,40 +406,9 @@ static lambda_t html = [](const Properties& properties, std::string& filtered, s
 	filtered += "</table>\n<br /><br />\n";
     }
   }
-};
 
-bool boilerplateCodeDoc::JsonSchema2HTML::operator()(const boilerplateCodeDoc::JsonSchema& jsonSchema)
-{
-    if( not jsonSchema.document_ptr ) {
-	error = boilerplateCodeDoc::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
-	message = "Empty document pointer";
-	return false;
-    }
-
-    rapidjson::Document& document {*reinterpret_cast<rapidjson::Document*>(jsonSchema.document_ptr)};
-    try {
-	    if(document.IsNull() || not document.IsObject() ) {
-		error = boilerplateCodeDoc::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
-		message = "Root element shouldn't be NULL";
-		return false;
-	    }
-
-	    //std::string element {"#/properties/imp/items/properties/native"};
-	    std::string element {"#"};
-	    filtered = header;
-	    SetProperties(document, element, filtered, html, css_class);
-	    filtered += footer;
-
-	    error = boilerplateCodeDoc::ParseErrorCode::OK;
-	    message = to_string(error);
-	    return true;
-
-    } catch(...) {
-	error = boilerplateCodeDoc::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
-	message = "Unexpected exception";
-	return false;
-    }
-}
+}); // return boilerplateOperator
+} // operator()
 
 /****************************************************************************************/
 /****************************************************************************************/
@@ -415,8 +418,10 @@ bool boilerplateCodeDoc::JsonSchema2HTML::operator()(const boilerplateCodeDoc::J
 /****************************************************************************************/
 /****************************************************************************************/
 
-static lambda_t cpp = [](const Properties& properties, std::string& filtered, std::string& namespace_id)
+bool boilerplateCodeDoc::JsonSchema2CPP::operator()(const boilerplateCodeDoc::JsonSchema& jsonSchema)
 {
+return boilerplateOperator(jsonSchema, *this, [](const Properties& properties, std::string& filtered, std::string& namespace_id) {
+
   if(properties.size() > 0) {
 
     // supposed metatype is a must
@@ -439,37 +444,6 @@ static lambda_t cpp = [](const Properties& properties, std::string& filtered, st
     }
 
   }
-};
 
-bool boilerplateCodeDoc::JsonSchema2CPP::operator()(const boilerplateCodeDoc::JsonSchema& jsonSchema)
-{
-    if( not jsonSchema.document_ptr ) {
-	error = boilerplateCodeDoc::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
-	message = "Empty document pointer";
-	return false;
-    }
-
-    rapidjson::Document& document {*reinterpret_cast<rapidjson::Document*>(jsonSchema.document_ptr)};
-    try {
-	    if(document.IsNull() || not document.IsObject() ) {
-		error = boilerplateCodeDoc::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
-		message = "Root element shouldn't be NULL";
-		return false;
-	    }
-
-	    //std::string element {"#/properties/imp/items/properties/native"};
-	    std::string element {"#"};
-	    filtered = header;
-	    SetProperties(document, element, filtered, cpp, namespace_id);
-	    filtered += footer;
-
-	    error = boilerplateCodeDoc::ParseErrorCode::OK;
-	    message = to_string(error);
-	    return true;
-
-    } catch(...) {
-	error = boilerplateCodeDoc::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
-	message = "Unexpected exception";
-	return false;
-    }
-}
+}); // return boilerplateOperator
+} // operator()
