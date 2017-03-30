@@ -12,8 +12,10 @@ add_library(${LIB_STATIC_NAME} STATIC $<TARGET_OBJECTS:${LIB_OBJECT_NAME}>)
 #add_library(${LIB_SHARED_NAME} SHARED $<TARGET_OBJECTS:${LIB_OBJECT_NAME}>)
 #set_target_properties(${LIB_SHARED_NAME} PROPERTIES VERSION ${HUMAN_VERSION})
 
-# binary
-add_executable(${LOCAL_CMAKE_PROJECT_NAME}_tool ${TOOL_SOURCES} ${LIB_SOURCES})
+# tool binary
+add_executable(${TOOL_NAME} ${TOOL_SOURCES})
+add_dependencies(${TOOL_NAME} ${LIB_STATIC_NAME})
+target_link_libraries(${TOOL_NAME} ${LIB_STATIC_NAME} ${STATIC_LIB_LINKER})
 
 ### Only if this the principal project ###
 if("${LOCAL_CMAKE_PROJECT_NAME}" STREQUAL "${CMAKE_PROJECT_NAME}")
@@ -21,7 +23,7 @@ if("${LOCAL_CMAKE_PROJECT_NAME}" STREQUAL "${CMAKE_PROJECT_NAME}")
   ### Install binaries ###
   install(TARGETS ${LIB_STATIC_NAME} ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
   #install(TARGETS ${LIB_SHARED_NAME} LIBRARY DESTINATION ${LIB_INSTALL_DIR})
-  install(TARGETS ${LOCAL_CMAKE_PROJECT_NAME}_tool RUNTIME DESTINATION ${LIB_INSTALL_DIR})
+  install(TARGETS ${LOCAL_TOOL} RUNTIME DESTINATION ${LIB_INSTALL_DIR})
 
   ### Install headers ###
   file(GLOB HEADERS ../include/*.h)

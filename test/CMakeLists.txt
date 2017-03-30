@@ -15,7 +15,7 @@ if(Boost_FOUND)
  link_directories(${LIB_PATH} ${STATIC_LIB_PATH})
  add_executable(${TEST_NAME} ${SOURCES_MAIN} ${EXTRA_MAIN})
  add_dependencies(${TEST_NAME} ${LIB_STATIC_NAME} ${TEST_NAME}_data)
- target_link_libraries(${TEST_NAME} BoilerplateCodeDoc_static ${LIB_STATIC_NAME} ${STATIC_LIB_LINKER} ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
+ target_link_libraries(${TEST_NAME} ${LIB_STATIC_NAME} ${STATIC_LIB_LINKER} ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
  add_test(UnitTest ${TEST_NAME})
 
  install(TARGETS ${TEST_NAME} RUNTIME DESTINATION ${TEST_INSTALL_DIR})

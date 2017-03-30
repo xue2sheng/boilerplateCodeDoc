@@ -71,6 +71,7 @@ endif(DOXYGEN_FOUND)
 set(VERSION_VAR_NAME "${LOCAL_CMAKE_PROJECT_NAME}_VERSION")
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/templates/version.h.in ${CMAKE_CURRENT_SOURCE_DIR}/src/version.h @ONLY)
 
+
 ####################################
 # build/install/pack instructions  #
 ####################################
@@ -119,6 +120,72 @@ set(${LOCAL_CMAKE_PROJECT_NAME}_STATIC_LIB "${CMAKE_CURRENT_BINARY_DIR}/${LOCAL_
 set(${LOCAL_CMAKE_PROJECT_NAME}_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/${LOCAL_CMAKE_PROJECT_NAME}/include")
 set(LIB_SHARED_NAME "${LOCAL_CMAKE_PROJECT_NAME}")
 set(TEST_NAME "${LOCAL_CMAKE_PROJECT_NAME}_test")
+set(TOOL_NAME "${LOCAL_CMAKE_PROJECT_NAME}_tool")
+set(TOOL_INPUT_FILE "${CMAKE_CURRENT_SOURCE_DIR}/json/schema.json")
+set(TOOL_CPP_OUTPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/${LOCAL_CMAKE_PROJECT_NAME}.h")
+set(TOOL_HTML_OUTPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/${LOCAL_CMAKE_PROJECT_NAME}.html")
+
+###############################################
+# html & cpp code generation by external tool #
+###############################################
+function(locate_boilerplate_tool TOOL_NAME TOOL_DIR TOOL_SOURCE_DIR TOOL_INCLUDE_DIR TOOL_BINARY)
+ set(TOOL_NAME_VAR "${TOOL_NAME}")
+ set(TOOL_DIR_VAR "${TOOL_DIR}")
+ set(TOOL_SOURCE_DIR_VAR "${TOOL_SOURCE_DIR}")
+ set(TOOL_INCLUDE_DIR_VAR "${TOOL_INCLUDE_DIR}")
+ find_program(TOOL_BINARY_VAR NAME ${TOOL_NAME_VAR} HINTS ${TOOL_DIR_VAR})
+ if(NOT TOOL_BINARY_VAR)
+    # time to build it in a very dirty way but fast!
+    file(GLOB TOOL_SOURCE_FILES ${TOOL_SOURCE_DIR_VAR}/*.cpp)
+    if(EXISTS ${TOOL_DIR_VAR})
+      message(STATUS "Using tool directory: ${TOOL_DIR_VAR}")
+    else()
+      message(STATUS "Creating tool at directory: ${TOOL_DIR_VAR}")
+      file(MAKE_DIRECTORY ${TOOL_DIR_VAR})
+    endif()
+    set(EXECUTE_COMMAND ${CMAKE_CXX_COMPILER} -v
+	-o ${TOOL_DIR_VAR}/${TOOL_NAME_VAR}
+	-I${TOOL_INCLUDE_DIR} -I${TOOL_SOURCE_DIR}/.
+	${TOOL_SOURCE_FILES})
+    execute_process(COMMAND ${EXECUTE_COMMAND} WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR} TIMEOUT 5
+	RESULT_VARIABLE TOOL_BINARY_RESULT OUTPUT_VARIABLE TOOL_BINARY_OUTPUT ERROR_VARIABLE TOOL_BINARY_ERROR)
+    find_program(TOOL_BINARY_VAR NAME ${TOOL_NAME_VAR} HINTS ${TOOL_DIR_VAR})
+ endif()
+ message(STATUS "Tool: ${TOOL_BINARY_VAR}")
+ if(NOT TOOL_BINARY_VAR)
+      message(STATUS "Tool name: ${TOOL_NAME_VAR}")
+      message(STATUS "Tool dir: ${TOOL_DIR_VAR}")
+      message(STATUS "Tool source dir: ${TOOL_SOURCE_DIR_VAR}")
+      message(STATUS "Tool include dir: ${TOOL_INCLUDE_DIR_VAR}")
+      message(STATUS "Tool binary generation: result<${TOOL_BINARY_RESULT}> output<${TOOL_BINARY_OUTPUT}> error<${TOOL_BINARY_ERROR}>")
+      message(FATAL_ERROR "Unable to find or build ${TOOL_NAME_VAR} required to generate needed code")
+ endif()
+ set(${TOOL_BINARY} "${TOOL_BINARY_VAR}" PARENT_SCOPE)
+endfunction(locate_boilerplate_tool TOOL_NAME TOOL_DIR TOOL_BINARY)
+
+## tool directory
+if(EXISTS ${TOOL_DIR})
+    message(STATUS "Tool directory: ${TOOL_DIR}")
+else(EXISTS ${TOOL_DIR})
+ if(EXISTS $ENV{JSONSCHEMA2CPP})
+    set(TOOL_DIR "$ENV{JSONSCHEMA2CPP}")
+ else()
+    set(TOOL_DIR "${CMAKE_CURRENT_BINARY_DIR}/src")
+ endif(EXISTS $ENV{JSONSCHEMA2CPP})
+endif(EXISTS ${TOOL_DIR})
+
+## tool binary
+locate_boilerplate_tool(${TOOL_NAME} ${TOOL_DIR} "${CMAKE_CURRENT_SOURCE_DIR}/src" "${CMAKE_CURRENT_SOURCE_DIR}/include" TOOL_BINARY)
+
+## Now that tool is found or created, high time to use it!
+execute_process(COMMAND ${TOOL_BINARY} ${TOOL_INPUT_FILE} ${TOOL_HTML_OUTPUT_FILE} ${TOOL_CPP_OUTPUT_FILE} TIMEOUT 5
+    RESULT_VARIABLE TOOL_BINARY_RESULT OUTPUT_VARIABLE TOOL_BINARY_OUTPUT ERROR_VARIABLE TOOL_BINARY_ERROR)
+if(TOOL_BINARY_RESULT)
+    message(FATAL_ERROR "Unable to generated C++/HTML code")
+else()
+    message(STATUS "Generated HTML: ${TOOL_HTML_OUTPUT_FILE}")
+    message(STATUS "Generated C++: ${TOOL_CPP_OUTPUT_FILE}")
+endif()
 
 ### Install ###
 if(DEFINED ENV{INSTALL_PREFIX})
