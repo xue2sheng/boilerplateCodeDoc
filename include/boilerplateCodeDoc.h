@@ -198,7 +198,6 @@ namespace boilerplateCodeDoc {
       #pragma once
       #include <string>
       #include <vector>
-      #include <sstream>
 
        )"};
 

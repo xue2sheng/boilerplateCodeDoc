@@ -187,6 +187,9 @@ else()
     message(STATUS "Generated C++: ${TOOL_CPP_OUTPUT_FILE}")
 endif()
 
+## Create a target to relaunch the tool later on
+add_custom_target(launch${TOOL_NAME} ALL ${TOOL_BINARY} ${TOOL_INPUT_FILE} ${TOOL_HTML_OUTPUT_FILE} ${TOOL_CPP_OUTPUT_FILE} WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+
 ### Install ###
 if(DEFINED ENV{INSTALL_PREFIX})
   set(INTERNAL_INSTALL_PREFIX "${INSTALL_PREFIX}")

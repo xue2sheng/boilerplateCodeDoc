@@ -8,7 +8,6 @@
       #pragma once
       #include <string>
       #include <vector>
-      #include <sstream>
 
        namespace boilerplate::Example {
 
