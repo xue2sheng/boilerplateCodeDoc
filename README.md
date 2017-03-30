@@ -90,6 +90,35 @@ FD -- (choose specific\nCSS)
 -->
 ![Json Example](/images/json.png)
 
+### Example: Tech Json Schema Info into C++ structure
+
+Not only documentation could be directly mapped from **Json Schema**, but also **proper C++ code**. That way all the repetitive, and so *humar error-prone*, chores might be reduced. Furthermore, if some **mistake** is detected, it's far easier to **fix** the generator tool because *computer* tends to commit the very same error again and again; humans, apart of repetitive erros, commit *new imaginative* ones all the time.
+ 
+<!--
+
+@startuml cpp.png
+
+top to bottom direction
+skinparam packageStyle rectangle
+
+actor "Backend\n...Dev..." as BD
+
+rectangle BackendServer {
+(file\nread) .> (structured\ndata)
+BD -- (adding\ngeneric\nformat info)
+(structured\ndata) .> (adding\ngeneric\nformat info)
+(adding\ngeneric\nformat info) .> (SIMPLY CPP)
+}
+
+cloud FileSystem {
+(Json Schema) .> (file\nread)
+}
+@enduml
+
+-->
+![Json Example](/images/cpp.png)
+
+
 ## Useful libraries
 
-At the **backend** [Boost Hana](https://github.com/boostorg/hana) by [Luois Dionne](https://github.com/ldionne) and [RapidJSON](https://github.com/miloyip/rapidjson) by [Milo Yip](https://github.com/miloyip) can be used to fight back all the ugliness possible and get to the **frontend** some simplified *Markdown/HTML/text* data to transform through [Pandoc](http://pandoc.org/) into waterdowned *HTML/CSS*.
+At the **backend** [Boost Hana](https://github.com/boostorg/hana) by [Luois Dionne](https://github.com/ldionne) and [RapidJSON](https://github.com/miloyip/rapidjson) by [Milo Yip](https://github.com/miloyip) can be used to fight back all the ugliness possible and get to the **frontend** some simplified *Markdown/text* data to transform through [Pandoc](http://pandoc.org/) into waterdowned *HTML/CSS*.
