@@ -22,12 +22,11 @@
     "imp": {
       "description": "Impressions rock",
       "type": "array",
+      "title": "Impression",
       "metatype": "std::vector<Impression>",
-      "bookmarkSource": "#impression",
       "items": {
-        "title": "Impression",
-        "bookmarkTarget": "impression",
         "type": "object",
+        "title": "Impression",
         "metatype" : "struct Impression",
         "properties": {
           "id": {
@@ -95,6 +94,7 @@
               "deals": {
                 "type": "array",
                 "metatype": "std::vector<Deal>",
+                "title": "Deal",
                 "items": {
                   "title": "Deal",
                   "type": "object",

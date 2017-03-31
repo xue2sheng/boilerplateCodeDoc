@@ -145,21 +145,25 @@ using Required = std::vector<std::string>;
 using OneOf = std::vector<Required>;
 struct Property {
     bool required {false};
+    std::string element {};
     std::string scope {};
     std::string name {};
     std::string type {};
     std::string description {};
     std::string title {};
     std::string parentTitle {};
+    std::string parentType {};
     std::string metatype {};
     std::string parentMetatype {};
     std::string metainfo {};
     std::string bookmark_source {};
     std::string bookmark_target {};
-    Property(bool req, std::string sco, std::string nam, std::string typ, std::string des, std::string tit,
+    Property(bool req, std::string elm, std::string sco, std::string nam, std::string typ, std::string ptyp, std::string des, std::string tit,
 	     std::string par, std::string met, std::string pm, std::string inf, std::string bs, std::string bt)
-	: required{req}, scope{std::move(sco)}, name{std::move(nam)}, type{std::move(typ)}, description{std::move(des)}, title{std::move(tit)},
-	  parentTitle{std::move(par)}, metatype{std::move(met)}, parentMetatype{std::move(pm)}, metainfo{std::move(inf)},
+	: required{req}, element{std::move(elm)},
+	  scope{std::move(sco)}, name{std::move(nam)}, type{std::move(typ)}, parentType{std::move(ptyp)},
+	  description{std::move(des)}, title{std::move(tit)}, parentTitle{std::move(par)},
+	  metatype{std::move(met)}, parentMetatype{std::move(pm)}, metainfo{std::move(inf)},
 	  bookmark_source{std::move(bs)}, bookmark_target{std::move(bt)} {}
 };
 using Properties = std::map<std::string, Property>;
@@ -209,9 +213,21 @@ static void processProperties(const OneOf& oneOf, const Required& required, Prop
 		}
 	}
 
-	// by default "scope" will be "optional"
 	for(auto&& p : properties) {
-		if( p.second.scope.empty() ) { p.second.scope = "optional"; }
+
+		auto&& e {p.second}; //alias
+
+		// by default "scope" will be "optional"
+		if( e.scope.empty() ) { e.scope = "optional"; }
+
+		// get ready in a lazy way for HTML table internal links
+		if (e.type == "object" || e.type == "array" ) {
+			if( e.bookmark_source.empty() ) { e.bookmark_source = "#" + (e.title.empty()?e.parentTitle:e.title); }
+		}
+		if( e.parentType == "object" || e.parentType == "array" ) {
+			if( e.bookmark_target.empty() ) { e.bookmark_target = e.parentTitle; }
+		}
+
 	}
 
 }
@@ -258,9 +274,11 @@ static void SetProperties(const rapidjson::Document& document, std::string eleme
               std::string title {}; // optional
               getString(document, element, "/properties/", name, "/title", title);
               std::string parentTitle {}; // optional
-              getString(document, element, "", "", "/title", parentTitle);
+	      getString(document, element, "", "", "/title", parentTitle);
 	      std::string parentMetatype {}; // required
 	      if(not getString(document, element, "", "", "/metatype", parentMetatype)) { continue; }
+	      std::string parentType {}; // required
+	      if(not getString(document, element, "", "", "/type", parentType)) { continue; }
 	      std::string metatype {}; // required
 	      if(not getString(document, element, "/properties/", name, "/metatype", metatype)) { continue; }
 	      std::string metainfo {}; // optional
@@ -271,7 +289,7 @@ static void SetProperties(const rapidjson::Document& document, std::string eleme
 	      getString(document, element, "/properties/", name, "/bookmarkSource", bookmark_source);
 	      std::string bookmark_target {}; // optional
 	      getString(document, element, "", "", "/bookmarkTarget", bookmark_target);
-	      properties.emplace(std::make_pair(name, Property{false, scope, name, type, description, title,
+	      properties.emplace(std::make_pair(name, Property{false, element, scope, name, type, parentType, description, title,
 							       parentTitle, metatype, parentMetatype, metainfo, bookmark_source, bookmark_target}));
             }
 
@@ -288,10 +306,12 @@ static void SetProperties(const rapidjson::Document& document, std::string eleme
               getString(document, element, "/items/properties/", name, "/description", description);
               std::string title {}; // optional
 	      getString(document, element, "/items/properties/", name, "/title", title);
-              std::string parentTitle {}; // optional
+	      std::string parentTitle {}; // optional
 	      getString(document, element, "/items", "", "/title", parentTitle);
-	      std::string parentMetatype {}; // optional
-	      getString(document, element, "/items", "", "/metatype", parentMetatype);
+	      std::string parentType {}; // required
+	      if(not getString(document, element, "/items", "", "/type", parentType)) { continue; }
+	      std::string parentMetatype {}; // required
+	      if(not getString(document, element, "/items", "", "/metatype", parentMetatype)) { continue; }
 	      std::string metatype {}; // optional
 	      getString(document, element, "/items/properties/", name, "/metatype", metatype);
 	      std::string metainfo {}; // optional
@@ -302,7 +322,7 @@ static void SetProperties(const rapidjson::Document& document, std::string eleme
 	      getString(document, element, "/items/properties/", name, "/bookmarkSource", bookmark_source);
 	      std::string bookmark_target {}; // optional
 	      getString(document, element, "/items", "", "/bookmarkTarget", bookmark_target);
-	      properties.emplace(std::make_pair(name, Property{false, scope, name, type, description, title,
+	      properties.emplace(std::make_pair(name, Property{false, element, scope, name, type, parentType, description, title,
 							       parentTitle, metatype, parentMetatype, metainfo, bookmark_source, bookmark_target}));
             }
 
@@ -323,7 +343,7 @@ static void SetProperties(const rapidjson::Document& document, std::string eleme
                 oneOf.emplace_back(temp);
             }
            }
-        }
+	}
     }
     processProperties(oneOf, required, properties); // what is required
     lambda(properties); // apply filter
@@ -509,13 +529,14 @@ if( not jsonSchema.cpp_filename.empty() && not header.empty() ) {
 }
 return boilerplateOperator(jsonSchema, *this, [this, namespace_id = jsonSchema.namespace_id](const Properties& properties) {
 
-	/*
+  static std::string rapidjsonPointerInfo {};
+
   if(properties.size() > 0) {
 
     // supposed metatype is a must
-    std::string parentMetatype {};
-    parentMetatype = properties.begin()->second.parentMetatype;
-    if( parentMetatype.empty() ) { return; } // required
+    std::string parentType {};
+    parentType = properties.begin()->second.parentType;
+    if( parentType.empty() ) { return; } // required
 
     // if nothing is implemented, do nothing
     bool nothing_implemented {true};
@@ -523,32 +544,15 @@ return boilerplateOperator(jsonSchema, *this, [this, namespace_id = jsonSchema.n
 	if( implemented(p.second.metainfo) ) { nothing_implemented = false; break; }
     }
     if( nothing_implemented ) {
-	    filtered = "\n// " + parentMetatype + ": all their properties are not implemented\n\n" + filtered;
+	    filtered = "\n// " + parentType + ": all their properties are not implemented\n\n" + filtered;
 	    return;
     }
 
-    std::string addition {};
-    if( not namespace_id.empty() ) { addition += "namespace " + namespace_id + " {\n"; }
-    addition += "\n" + parentMetatype + " {\n\n";
+    rapidjsonPointerInfo += properties.begin()->second.element + "\n";
 
-    for(const auto& p : properties) {
-
-	    if( not implemented(p.second.metainfo) ) { addition += "// " + p.second.name + ": " + p.second.metainfo + "\n"; continue; }
-
-	    std::string metatype {p.second.metatype};
-	    if( metatype.empty() ) { continue; } // required
-	    std::string name {p.second.name};
-	    if( name.empty() ) { continue; } // required
-
-	    if( not p.second.description.empty() ) { addition += "///@ brief " + p.second.description + "\n"; }
-	    addition += metatype + " " + name + " {};\n";
-    }
-
-    addition += "\n}; // " + parentMetatype + "\n";
-    if( not namespace_id.empty() ) { addition += "\n} // namespace " + namespace_id + "\n\n"; }
+    std::string addition {rapidjsonPointerInfo + "\n"};
 
     filtered = addition + filtered;
   }
-*/
 }); // return boilerplateOperator
 } // operator()
