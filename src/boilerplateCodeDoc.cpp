@@ -216,9 +216,9 @@ static void processProperties(const OneOf& oneOf, const Required& required, Prop
 
 }
 
-using lambda_t = std::function<void(const Properties&, std::string&, std::string&)>;
+using lambda_t = std::function<void(const Properties&)>;
 
-static void SetProperties(const rapidjson::Document& document, std::string element, std::string& filtered, const lambda_t& lambda, std::string& extra)
+static void SetProperties(const rapidjson::Document& document, std::string element, const lambda_t& lambda)
 {
     OneOf oneOf {};
     Required required {};
@@ -326,19 +326,18 @@ static void SetProperties(const rapidjson::Document& document, std::string eleme
         }
     }
     processProperties(oneOf, required, properties); // what is required
-    lambda(properties, filtered, extra); // apply filter
+    lambda(properties); // apply filter
 
     // recursive call
     for(const auto& p : properties) {
         if( "object" == p.second.type || "array" == p.second.type) {
-	    SetProperties(document, nextElement + p.second.name, filtered, lambda, extra);
+	    SetProperties(document, nextElement + p.second.name, lambda);
         }
     }
 
 }
 
-static bool boilerplateOperator(const boilerplateCodeDoc::JsonSchema& jsonSchema, boilerplateCodeDoc::JsonSchemaFilter& filter,
-				const std::string& extra, const lambda_t& lambda)
+static bool boilerplateOperator(const boilerplateCodeDoc::JsonSchema& jsonSchema, boilerplateCodeDoc::JsonSchemaFilter& filter, const lambda_t& lambda)
 {
     if( not jsonSchema.document_ptr ) {
 	filter.error = boilerplateCodeDoc::ParseErrorCode::ERROR_PARSING_SCHEMA_JSON;
@@ -356,8 +355,7 @@ static bool boilerplateOperator(const boilerplateCodeDoc::JsonSchema& jsonSchema
 
 	    //std::string element {"#/properties/imp/items/properties/native"};
 	    std::string element {"#"};
-	    std::string filter_extra {(extra.empty()?filter.extra:extra)};
-	    SetProperties(document, element, filter.filtered, lambda, filter_extra );
+	    SetProperties(document, element, lambda );
 	    filter.filtered = filter.header + filter.filtered + filter.footer;
 
 	    filter.error = boilerplateCodeDoc::ParseErrorCode::OK;
@@ -396,7 +394,7 @@ static bool implemented(const std::string& metainfo)
 
 bool boilerplateCodeDoc::JsonSchema2HTML::operator()(const boilerplateCodeDoc::JsonSchema& jsonSchema)
 {
-return boilerplateOperator(jsonSchema, *this, jsonSchema.css_class, [](const Properties& properties, std::string& filtered, std::string& css_class) {
+return boilerplateOperator(jsonSchema, *this, [this, css_class = jsonSchema.css_class](const Properties& properties) {
 
   if(properties.size() > 0) {
 
@@ -447,8 +445,10 @@ return boilerplateOperator(jsonSchema, *this, jsonSchema.css_class, [](const Pro
 
 bool boilerplateCodeDoc::JsonSchema2H::operator()(const boilerplateCodeDoc::JsonSchema& jsonSchema)
 {
-if( not jsonSchema.cpp_filename.empty() && not header.empty() ) { header = "/** @file " + jsonSchema.cpp_filename + ".h" + header; }
-return boilerplateOperator(jsonSchema, *this, jsonSchema.namespace_id, [](const Properties& properties, std::string& filtered, std::string& namespace_id) {
+if( not jsonSchema.cpp_filename.empty() && not header.empty() ) {
+	header = "/** @file " + jsonSchema.cpp_filename + ".h" + header;
+}
+return boilerplateOperator(jsonSchema, *this, [this, namespace_id = jsonSchema.namespace_id](const Properties& properties) {
 
   if(properties.size() > 0) {
 
@@ -503,8 +503,11 @@ return boilerplateOperator(jsonSchema, *this, jsonSchema.namespace_id, [](const 
 
 bool boilerplateCodeDoc::JsonSchema2CPP::operator()(const boilerplateCodeDoc::JsonSchema& jsonSchema)
 {
-if( not jsonSchema.cpp_filename.empty() && not header.empty() ) { header = "/** @file " + jsonSchema.cpp_filename + ".cpp" + header; }
-return boilerplateOperator(jsonSchema, *this, jsonSchema.namespace_id, [](const Properties& properties, std::string& filtered, std::string& namespace_id) {
+if( not jsonSchema.cpp_filename.empty() && not header.empty() ) {
+	header = "/** @file " + jsonSchema.cpp_filename + ".cpp" + header;
+	header += "\n#include \"" + jsonSchema.cpp_filename + ".h\"\n\n";
+}
+return boilerplateOperator(jsonSchema, *this, [this, namespace_id = jsonSchema.namespace_id](const Properties& properties) {
 
 	/*
   if(properties.size() > 0) {
