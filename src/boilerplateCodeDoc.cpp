@@ -529,8 +529,6 @@ if( not jsonSchema.cpp_filename.empty() && not header.empty() ) {
 }
 return boilerplateOperator(jsonSchema, *this, [this, namespace_id = jsonSchema.namespace_id](const Properties& properties) {
 
-  static std::string rapidjsonPointerInfo {};
-
   if(properties.size() > 0) {
 
     // supposed metatype is a must
@@ -548,9 +546,19 @@ return boilerplateOperator(jsonSchema, *this, [this, namespace_id = jsonSchema.n
 	    return;
     }
 
-    rapidjsonPointerInfo += properties.begin()->second.element + "\n";
+    std::string addition {};
+    for(const auto& p : properties) {
 
-    std::string addition {rapidjsonPointerInfo + "\n"};
+	    if( not implemented(p.second.metainfo) ) { addition += "\n// " + p.second.name + ": " + p.second.metainfo; continue; }
+
+	    std::string name {p.second.name};
+	    if( name.empty() ) { continue; } // required
+	    std::string e {p.second.element};
+	    if( e.empty() ) { continue; } // required
+
+	    if( not p.second.description.empty() ) { addition += "\n/// " + p.second.description; }
+	    addition += "\nstatic constexpr const char* const _" + name + "{\"" + e + "/" + name + "\"};";
+    }
 
     filtered = addition + filtered;
   }
