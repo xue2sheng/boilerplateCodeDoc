@@ -45,16 +45,16 @@ int main(int argc, char** argv)
 
    std::string schema{argv[1]};
    std::string html{argv[2]};
-   std::string cpp{argv[3]};
+   std::string h{argv[3]};
 
    JsonSchema jsonSchema{schema};
    if(jsonSchema.error != ParseErrorCode::OK) { std::cout << jsonSchema.message << std::endl; return 1; }
 
-   JsonSchema2CPP cppFilter{};
-   bool resultCPP = processFilter(jsonSchema, cpp, cppFilter);
+   JsonSchema2H hFilter{};
+   bool resultH = processFilter(jsonSchema, h, hFilter);
 
    JsonSchema2HTML htmlFilter{};
    bool resultHTML = processFilter(jsonSchema, html, htmlFilter);
 
-   return (resultCPP && resultHTML) ? 0 : 1;
+   return (resultH && resultHTML) ? 0 : 1;
 }

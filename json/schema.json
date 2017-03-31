@@ -4,7 +4,7 @@
   "description": "version 0.0.1",
   "type": "object",
   "namespace": "boilerplate::Example",
-  "headerFileName": "boilerplateExample.h",
+  "cppFileName": "boilerplateExample",
   "cssClass": "boilerplateExample",
   "metatype": "struct Data",
   "properties": {

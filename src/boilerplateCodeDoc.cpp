@@ -115,8 +115,8 @@ boilerplateCodeDoc::JsonSchema::JsonSchema(std::string filename)
 			     if( document.HasMember("cssClass") ) {
 				      css_class = document["cssClass"].GetString();
 			      }
-			     if( document.HasMember("headerFileName") ) {
-				      header_filename = document["headerFileName"].GetString();
+			     if( document.HasMember("cppFileName") ) {
+				      cpp_filename = document["cppFileName"].GetString();
 			      }
 
 			     error = boilerplateCodeDoc::ParseErrorCode::OK;
@@ -445,9 +445,9 @@ return boilerplateOperator(jsonSchema, *this, jsonSchema.css_class, [](const Pro
 /****************************************************************************************/
 /****************************************************************************************/
 
-bool boilerplateCodeDoc::JsonSchema2CPP::operator()(const boilerplateCodeDoc::JsonSchema& jsonSchema)
+bool boilerplateCodeDoc::JsonSchema2H::operator()(const boilerplateCodeDoc::JsonSchema& jsonSchema)
 {
-if( not jsonSchema.header_filename.empty() && not header.empty() ) { header = "/** @file " + jsonSchema.header_filename + header; }
+if( not jsonSchema.cpp_filename.empty() && not header.empty() ) { header = "/** @file " + jsonSchema.cpp_filename + ".h" + header; }
 return boilerplateOperator(jsonSchema, *this, jsonSchema.namespace_id, [](const Properties& properties, std::string& filtered, std::string& namespace_id) {
 
   if(properties.size() > 0) {
@@ -490,5 +490,62 @@ return boilerplateOperator(jsonSchema, *this, jsonSchema.namespace_id, [](const 
     filtered = addition + filtered;
   }
 
+}); // return boilerplateOperator
+} // operator()
+
+/****************************************************************************************/
+/****************************************************************************************/
+/****************************************************************************************/
+/*********************** ACTUAL LOGIC CODE **********************************************/
+/****************************************************************************************/
+/****************************************************************************************/
+/****************************************************************************************/
+
+bool boilerplateCodeDoc::JsonSchema2CPP::operator()(const boilerplateCodeDoc::JsonSchema& jsonSchema)
+{
+if( not jsonSchema.cpp_filename.empty() && not header.empty() ) { header = "/** @file " + jsonSchema.cpp_filename + ".cpp" + header; }
+return boilerplateOperator(jsonSchema, *this, jsonSchema.namespace_id, [](const Properties& properties, std::string& filtered, std::string& namespace_id) {
+
+	/*
+  if(properties.size() > 0) {
+
+    // supposed metatype is a must
+    std::string parentMetatype {};
+    parentMetatype = properties.begin()->second.parentMetatype;
+    if( parentMetatype.empty() ) { return; } // required
+
+    // if nothing is implemented, do nothing
+    bool nothing_implemented {true};
+    for(const auto& p : properties) {
+	if( implemented(p.second.metainfo) ) { nothing_implemented = false; break; }
+    }
+    if( nothing_implemented ) {
+	    filtered = "\n// " + parentMetatype + ": all their properties are not implemented\n\n" + filtered;
+	    return;
+    }
+
+    std::string addition {};
+    if( not namespace_id.empty() ) { addition += "namespace " + namespace_id + " {\n"; }
+    addition += "\n" + parentMetatype + " {\n\n";
+
+    for(const auto& p : properties) {
+
+	    if( not implemented(p.second.metainfo) ) { addition += "// " + p.second.name + ": " + p.second.metainfo + "\n"; continue; }
+
+	    std::string metatype {p.second.metatype};
+	    if( metatype.empty() ) { continue; } // required
+	    std::string name {p.second.name};
+	    if( name.empty() ) { continue; } // required
+
+	    if( not p.second.description.empty() ) { addition += "///@ brief " + p.second.description + "\n"; }
+	    addition += metatype + " " + name + " {};\n";
+    }
+
+    addition += "\n}; // " + parentMetatype + "\n";
+    if( not namespace_id.empty() ) { addition += "\n} // namespace " + namespace_id + "\n\n"; }
+
+    filtered = addition + filtered;
+  }
+*/
 }); // return boilerplateOperator
 } // operator()

@@ -155,7 +155,34 @@ BOOST_AUTO_TEST_CASE( test002 ) {
 }
 
 BOOST_AUTO_TEST_CASE( test003 ) {
-   BOOST_TEST_MESSAGE( "\ntest003: Transform external Json Schema into C++ structure");
+   BOOST_TEST_MESSAGE( "\ntest003: Transform external Json Schema into C++ structure header");
+
+   // taken for granted that CMake copied default json schema file in the very directory where this test binary is generated
+   std::string filename{"schema.json"};
+   std::string binary{boost::unit_test::framework::master_test_suite().argv[0]};
+   size_t found = binary.find_last_of("/\\");
+   if( found > 0 ) {
+	BOOST_TEST_MESSAGE( "found=" << found);
+	filename = binary.substr(0,found+1) + filename;
+   }
+
+   int argc =boost::unit_test::framework::master_test_suite().argc;
+   if( argc > 1) {
+	filename = std::string(boost::unit_test::framework::master_test_suite().argv[1]);
+   }
+   BOOST_TEST_MESSAGE( "current binary=" << binary );
+   BOOST_TEST_MESSAGE( "schema.json=" << filename );
+
+   boiler::JsonSchema jsonSchema{filename};
+   BOOST_TEST_MESSAGE( "Json Schema: " << jsonSchema.message);
+   boiler::JsonSchema2H handler {};
+   bool result = handler(jsonSchema);
+   BOOST_TEST_MESSAGE( "JsonSchema2H: " << handler.message << "\n\n" << handler.filtered);
+   BOOST_CHECK( result );
+}
+
+BOOST_AUTO_TEST_CASE( test004 ) {
+   BOOST_TEST_MESSAGE( "\ntest004: Transform external Json Schema into C++ structure file");
 
    // taken for granted that CMake copied default json schema file in the very directory where this test binary is generated
    std::string filename{"schema.json"};
@@ -180,3 +207,4 @@ BOOST_AUTO_TEST_CASE( test003 ) {
    BOOST_TEST_MESSAGE( "JsonSchema2CPP: " << handler.message << "\n\n" << handler.filtered);
    BOOST_CHECK( result );
 }
+
