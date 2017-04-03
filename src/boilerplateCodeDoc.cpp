@@ -5,6 +5,7 @@
 #include <utility>
 #include <map>
 #include <set>
+#include <regex>
 #include <functional>
 #include <rapidjson/rapidjson.h>
 #include <rapidjson/document.h>
@@ -521,6 +522,14 @@ return boilerplateOperator(jsonSchema, *this, [this, namespace_id = jsonSchema.n
 /****************************************************************************************/
 /****************************************************************************************/
 
+static inline std::string pointer2cppFriendly(const std::string& pointer)
+{
+	static const std::regex root{"#"};
+	static const std::regex child{"/"};
+	static const std::string cppFriendly{"_"};
+	return std::regex_replace(std::regex_replace(pointer, root, cppFriendly), child, cppFriendly);
+}
+
 bool boilerplateCodeDoc::JsonSchema2CPP::operator()(const boilerplateCodeDoc::JsonSchema& jsonSchema)
 {
 if( not jsonSchema.cpp_filename.empty() && not header.empty() ) {
@@ -557,7 +566,8 @@ return boilerplateOperator(jsonSchema, *this, [this, namespace_id = jsonSchema.n
 	    if( e.empty() ) { continue; } // required
 
 	    if( not p.second.description.empty() ) { addition += "\n/// " + p.second.description; }
-	    addition += "\nstatic constexpr const char* const _" + name + "{\"" + e + "/" + name + "\"};";
+	    std::string fullName {e+"/"+name};
+	    addition += "\nstatic constexpr const char* const " + pointer2cppFriendly(fullName) + "{\"" + fullName + "\"};";
     }
 
     filtered = addition + filtered;
