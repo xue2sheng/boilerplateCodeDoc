@@ -66,6 +66,10 @@ namespace boilerplateCodeDoc {
       /// @brief Expected C++ h/cpp file name to save automatically generated code
       /// @remark Although needed by another class, it's very handy to grab that piece of info here
       std::string cpp_filename {};
+
+      /// @brief Expected global data structure name to generate getters/setters.
+      /// @remark Although needed by another class, it's very handy to grab that piece of info here
+      std::string cpp_global_data_name {};
     };
 
 

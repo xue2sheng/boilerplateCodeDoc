@@ -118,7 +118,19 @@ boilerplateCodeDoc::JsonSchema::JsonSchema(std::string filename)
 			      }
 			     if( document.HasMember("cppFileName") ) {
 				      cpp_filename = document["cppFileName"].GetString();
-			      }
+			     }
+			     if( document.HasMember("metatype") ) {
+				      std::string metatype {document["metatype"].GetString()};
+				      if(not metatype.empty()) {
+					static const std::regex name{"^.* (.*)$"};
+					std::smatch match;
+					if(std::regex_search(metatype, match, name)) {
+						if(match.size() > 0) {
+							cpp_global_data_name = match[match.size() - 1];
+						}
+					}
+				      }
+			     }
 
 			     error = boilerplateCodeDoc::ParseErrorCode::OK;
 			     message = to_string(error);
@@ -456,6 +468,15 @@ return boilerplateOperator(jsonSchema, *this, [this, css_class = jsonSchema.css_
 }); // return boilerplateOperator
 } // operator()
 
+// from rapidjson::pointer to c++ const char* friendly name
+static inline std::string pointer2cppFriendly(const std::string& pointer)
+{
+	static const std::regex root{"#"};
+	static const std::regex child{"/"};
+	static const std::string cppFriendly{"_"};
+	return std::regex_replace(std::regex_replace(pointer, root, cppFriendly), child, cppFriendly);
+}
+
 /****************************************************************************************/
 /****************************************************************************************/
 /****************************************************************************************/
@@ -469,6 +490,32 @@ bool boilerplateCodeDoc::JsonSchema2H::operator()(const boilerplateCodeDoc::Json
 if( not jsonSchema.cpp_filename.empty() && not header.empty() ) {
 	header = "/** @file " + jsonSchema.cpp_filename + ".h" + header;
 }
+if( not jsonSchema.cpp_global_data_name.empty() && not footer.empty() ) {
+
+	std::string getter_setter {"\n\nnamespace " + jsonSchema.namespace_id + " {\n"};
+
+	static const std::string func {jsonSchema.namespace_id + "::" + jsonSchema.cpp_global_data_name + "& data );\n\n"};
+	static const std::string GETTER {R"(
+	/**
+	 * @brief get Data from the json buffer.
+	 * @param [out] Data to be updated.
+	 * @return true if success, false otherwise. Internal status error might be modified.
+	 *
+	 */
+	bool getData( )"};
+	static const std::string SETTER {R"(
+	/**
+	 * @brief set Data for the json buffer.
+	 * @param [in] Data to be updated.
+	 * @return true if success, false otherwise. Internal status error might be modified.
+	 *
+	 */
+	bool setData( const )"};
+
+	getter_setter += GETTER + func + SETTER + func + std::string{"\n\n} // namespace "} + jsonSchema.namespace_id;
+	footer = getter_setter + footer;
+}
+
 return boilerplateOperator(jsonSchema, *this, [this, namespace_id = jsonSchema.namespace_id](const Properties& properties) {
 
   if(properties.size() > 0) {
@@ -522,19 +569,14 @@ return boilerplateOperator(jsonSchema, *this, [this, namespace_id = jsonSchema.n
 /****************************************************************************************/
 /****************************************************************************************/
 
-static inline std::string pointer2cppFriendly(const std::string& pointer)
-{
-	static const std::regex root{"#"};
-	static const std::regex child{"/"};
-	static const std::string cppFriendly{"_"};
-	return std::regex_replace(std::regex_replace(pointer, root, cppFriendly), child, cppFriendly);
-}
-
 bool boilerplateCodeDoc::JsonSchema2CPP::operator()(const boilerplateCodeDoc::JsonSchema& jsonSchema)
 {
 if( not jsonSchema.cpp_filename.empty() && not header.empty() ) {
 	header = "/** @file " + jsonSchema.cpp_filename + ".cpp" + header;
 	header += "\n#include \"" + jsonSchema.cpp_filename + ".h\"\n\n";
+}
+if( not jsonSchema.cpp_global_data_name.empty() && not footer.empty() ) {
+	footer = "\n\n// *** " + jsonSchema.cpp_global_data_name + "\n\n" + footer;
 }
 return boilerplateOperator(jsonSchema, *this, [this, namespace_id = jsonSchema.namespace_id](const Properties& properties) {
 
