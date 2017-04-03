@@ -6,72 +6,85 @@
   "namespace": "boilerplate::Example",
   "cppFileName": "boilerplateExample",
   "cssClass": "boilerplateExample",
-  "metatype": "struct Data",
+  "cpptype": "struct Data",
+  "jsontype": "object",
   "properties": {
     "test": {
       "type": "integer",
-      "metatype": "unsigned int",
+      "cpptype": "unsigned int",
+      "jsontype": "UInt",
       "minimum": 0,
       "maximum": 1,
       "default": 0
     },
     "id": {
       "type": "string",
-      "metatype": "std::string"
+      "cpptype": "std::string",
+      "jsontype": "String"
     },
     "imp": {
       "description": "Impressions rock",
       "type": "array",
       "title": "Impression",
-      "metatype": "std::vector<Impression>",
+      "cpptype": "std::vector<Impression>",
+      "jsontype": "object",
       "items": {
         "type": "object",
         "title": "Impression",
-        "metatype" : "struct Impression",
+        "cpptype" : "struct Impression",
+        "jsontype" : "object",
         "properties": {
           "id": {
             "type": "string",
-            "metatype": "std::string"
+            "cpptype": "std::string",
+            "jsontype": "String"
           },
           "banner": {
             "type": "object",
-            "metatype" : "struct Banner",
+            "cpptype" : "struct Banner",
+            "jsontype" : "object",
             "metainfo": "not implemented",
             "scope": "required for banner impressions"
           },
           "audio": {
             "type": "object",
-            "metatype" : "struct Audio",
+            "cpptype" : "struct Audio",
+            "jsontype" : "object",
             "metainfo": "not implemented",
             "scope": "required for audio impressions"
           },
           "video": {
             "type": "object",
-            "metatype" : "struct Video",
+            "cpptype" : "struct Video",
+            "jsontype" : "object",
             "metainfo": "not implemented",
             "scope": "required for video impressions"
           },
           "native": {
             "title" : "Native",
-            "metatype" : "struct Native",
+            "cpptype" : "struct Native",
+            "jsontype" : "object",
             "type": "object",
             "scope": "required for native impressions",
             "properties": {
               "request": {
                 "type": "string",
-                "metatype": "std::string"
+                "cpptype": "std::string",
+                "jsontype": "String"
               },
               "ver": {
                 "type": "string",
-                "metatype": "std::string",
+                "cpptype": "std::string",
+                "jsontype": "String",
                 "default": "1.1"
               },
               "api": {
                 "type": "array",
-                "metatype": "std::vector<unsigned int>",
+                "cpptype": "std::vector<unsigned int>",
+                "jsontype": "object",
                 "items": {
                   "type": "integer",
-                  "metatype": "unsigned int"
+                  "cpptype": "unsigned int"
                 }
               }
             },
@@ -82,55 +95,65 @@
           "pmp": {
             "title" : "PMP",
             "type": "object",
-            "metatype": "struct PMP",
+            "cpptype": "struct PMP",
+            "jsontype": "object",
             "properties": {
               "private_auction": {
                 "type": "integer",
-                "metatype": "unsigned int",
+                "cpptype": "unsigned int",
+                "jsontype": "UInt",
                 "minimum": 0,
                 "maximum": 1,
                 "default": 0
               },
               "deals": {
                 "type": "array",
-                "metatype": "std::vector<Deal>",
+                "cpptype": "std::vector<Deal>",
+                "jsontype": "object",
                 "title": "Deal",
                 "items": {
                   "title": "Deal",
                   "type": "object",
-                  "metatype": "struct Deal",
+                  "cpptype": "struct Deal",
+                  "jsontype": "object",
                   "properties": {
                     "id": {
                       "type": "string",
-                      "metatype": "std::string"
+                      "cpptype": "std::string",
+                      "jsontype": "String"
                     },
                     "bidfloor": {
                       "type": "number",
-                      "metatype": "double",
+                      "cpptype": "double",
+                      "jsontype": "Double",
                       "minimum": 0.0,
                       "default": 0.0
                     },
                     "bidfloorcur": {
                       "type": "string",
-                      "metatype": "std::string",
+                      "cpptype": "std::string",
+                      "jsontype": "String",
                       "enum": [
                         "USD"
                       ]
                     },
                     "at": {
                       "type": "integer",
-                      "metatype": "int"
+                      "cpptype": "int",
+                      "jsontype": "Int"
                     },
                     "wseat": {
                       "type": "array",
-                      "metatype": "std::vector<std::string>",
+                      "cpptype": "std::vector<std::string>",
+                      "jsontype": "StringVector",
                       "items": {
                         "type": "string"
                       }
                     },
                     "wadomain": {
                       "type": "array",
-                      "metatype": "std::vector<std::string>",
+                      "cpptype": "std::vector<std::string>",
+                      "jsontype": "StringVector",
                       "items": {
                         "type": "string"
                       }
@@ -146,69 +169,81 @@
           },
           "displaymanager": {
             "type": "string",
-            "metatype": "std::string"
+            "cpptype": "std::string",
+            "jsontype": "String"
           },
           "displaymanagerver": {
             "type": "string",
-            "metatype": "std::string"
+            "cpptype": "std::string",
+            "jsontype": "String"
           },
           "instl": {
             "type": "integer",
-            "metatype": "unsigned int",
+            "cpptype": "unsigned int",
+            "jsontype": "UInt",
             "minimum": 0,
             "maximum": 1,
             "default": 0
           },
           "tagid": {
             "type": "string",
-            "metatype": "std::string"
+            "cpptype": "std::string",
+            "jsontype": "String"
           },
           "bidfloor": {
             "type": "number",
-            "metatype": "double",
+            "cpptype": "double",
+            "jsontype": "Double",
             "minimum": 0.0,
             "default": 0.0
           },
           "bidfloorcur": {
             "type": "string",
-            "metatype": "std::string",
+            "cpptype": "std::string",
+            "jsontype": "String",
             "enum": [
               "USD"
             ]
           },
           "clickbrowser": {
             "type": "integer",
-            "metatype": "unsigned int",
+            "cpptype": "unsigned int",
+            "jsontype": "UInt",
             "minimum": 0,
             "maximum": 1,
             "default": 0
           },
           "secure": {
             "type": "integer",
-            "metatype": "unsigned int",
+            "cpptype": "unsigned int",
+            "jsontype": "UInt",
             "minimum": 0,
             "maximum": 1,
             "default": 0
           },
           "iframabuster": {
             "type": "array",
-            "metatype": "std::vector<std::string>",
+            "cpptype": "std::vector<std::string>",
+            "jsontype": "StringVector",
             "items": {
               "type": "string"
             }
           },
           "exp": {
             "type": "integer",
-            "metatype": "int"
+            "cpptype": "int",
+            "jsontype": "Int"
           },
           "ext": {
             "title": "Extension",
             "type": "object",
-            "metatype": "struct Extension",
+            "cpptype": "struct Extension",
+            "jsontype": "object",
             "properties": {
               "strictbannersize": {
                 "type": "integer",
-                "metatype": "unsigned int",
+                "cpptype": "unsigned int",
+                "jsontype": "UInt",
                 "minimum": 0,
                 "maximum": 1,
                 "default": 0
