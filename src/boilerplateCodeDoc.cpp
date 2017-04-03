@@ -12,6 +12,9 @@
 #include <rapidjson/error/en.h>
 #include <rapidjson/pointer.h>
 
+// debug
+#include <iostream>
+
 // automatically generate version info
 #include "version.h"
 #include "boilerplateCodeDoc.h"
@@ -477,6 +480,26 @@ static inline std::string pointer2cppFriendly(const std::string& pointer)
 	return std::regex_replace(std::regex_replace(pointer, root, cppFriendly), child, cppFriendly);
 }
 
+// possible global getter
+static inline std::string globalGetter(const std::string& namespace_id, const std::string& name, bool addNamespace = false)
+{
+    return  std::string{"\nbool "} +
+            (addNamespace?(namespace_id.empty()?"":(namespace_id + std::string{"::"})):"") +
+            std::string{"getData( "} +
+            (namespace_id.empty()?"":(namespace_id + std::string{"::"})) + name +
+            std::string{"& data )"};
+}
+
+// possible global setter
+static inline std::string globalSetter(const std::string& namespace_id, const std::string& name, bool addNamespace = false)
+{
+    return  std::string{"\nbool "} +
+            (addNamespace?(namespace_id.empty()?"":(namespace_id + std::string{"::"})):"") +
+            std::string{"setData( const "} +
+            (namespace_id.empty()?"":(namespace_id + std::string{"::"})) + name +
+            std::string{"& data )"};
+}
+
 /****************************************************************************************/
 /****************************************************************************************/
 /****************************************************************************************/
@@ -492,28 +515,28 @@ if( not jsonSchema.cpp_filename.empty() && not header.empty() ) {
 }
 if( not jsonSchema.cpp_global_data_name.empty() && not footer.empty() ) {
 
-	std::string getter_setter {"\n\nnamespace " + jsonSchema.namespace_id + " {\n"};
-
-	static const std::string func {jsonSchema.namespace_id + "::" + jsonSchema.cpp_global_data_name + "& data );\n\n"};
 	static const std::string GETTER {R"(
 	/**
 	 * @brief get Data from the json buffer.
 	 * @param [out] Data to be updated.
 	 * @return true if success, false otherwise. Internal status error might be modified.
 	 *
-	 */
-	bool getData( )"};
+     */)"};
 	static const std::string SETTER {R"(
 	/**
 	 * @brief set Data for the json buffer.
 	 * @param [in] Data to be updated.
 	 * @return true if success, false otherwise. Internal status error might be modified.
 	 *
-	 */
-	bool setData( const )"};
+     */)"};
 
-	getter_setter += GETTER + func + SETTER + func + std::string{"\n\n} // namespace "} + jsonSchema.namespace_id;
-	footer = getter_setter + footer;
+    footer = std::string{"\n\nnamespace "} + jsonSchema.namespace_id + std::string{" {\n"} +
+             GETTER +
+             globalGetter(jsonSchema.namespace_id, jsonSchema.cpp_global_data_name) + std::string{";\n"} +
+             SETTER +
+             globalSetter(jsonSchema.namespace_id, jsonSchema.cpp_global_data_name) + std::string{";\n"} +
+             std::string{"\n} // namespace "} + jsonSchema.namespace_id +
+             footer;
 }
 
 return boilerplateOperator(jsonSchema, *this, [this, namespace_id = jsonSchema.namespace_id](const Properties& properties) {
@@ -575,10 +598,13 @@ if( not jsonSchema.cpp_filename.empty() && not header.empty() ) {
 	header = "/** @file " + jsonSchema.cpp_filename + ".cpp" + header;
 	header += "\n#include \"" + jsonSchema.cpp_filename + ".h\"\n\n";
 }
-if( not jsonSchema.cpp_global_data_name.empty() && not footer.empty() ) {
-	footer = "\n\n// *** " + jsonSchema.cpp_global_data_name + "\n\n" + footer;
-}
-return boilerplateOperator(jsonSchema, *this, [this, namespace_id = jsonSchema.namespace_id](const Properties& properties) {
+
+std::string GETTER_PREFIX {globalGetter(jsonSchema.namespace_id, jsonSchema.cpp_global_data_name, true) + std::string{"\n{\n"}};
+std::string GETTER_SUFIX {"\n} // getter\n"};
+std::string SETTER_PREFIX {globalSetter(jsonSchema.namespace_id, jsonSchema.cpp_global_data_name, true) + std::string{"\n{\n"}};
+std::string SETTER_SUFIX {"\n} // setter\n"};
+
+bool result = boilerplateOperator(jsonSchema, *this, [this, namespace_id = jsonSchema.namespace_id](const Properties& properties) {
 
   if(properties.size() > 0) {
 
@@ -614,5 +640,14 @@ return boilerplateOperator(jsonSchema, *this, [this, namespace_id = jsonSchema.n
 
     filtered = addition + filtered;
   }
-}); // return boilerplateOperator
+}); // result boilerplateOperator
+
+// it'll appear after the standard 'footer'
+filtered += std::string{"\n\n// Extra automatic footer: BEGIN\n\n"} +
+            GETTER_PREFIX + GETTER_SUFIX +
+            std::string{"\n\n"} +
+            SETTER_PREFIX + SETTER_SUFIX +
+            std::string{"\n\n// Extra automatic footer: END\n\n"};
+
+ return result;
 } // operator()
