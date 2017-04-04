@@ -425,6 +425,52 @@ static bool implemented(const std::string& metainfo)
 	return true;
 }
 
+// from rapidjson::pointer to c++ const char* friendly name
+static inline std::string pointer2cppFriendly(const std::string& pointer)
+{
+	static const std::regex root{"#"};
+	static const std::regex child{"/"};
+	static const std::string cppFriendly{"_"};
+	return std::regex_replace(std::regex_replace(pointer, root, cppFriendly), child, cppFriendly);
+}
+
+// possible global getter
+static inline std::string globalGetter(const std::string& namespace_id, const std::string& name, bool addNamespace = false)
+{
+    return  std::string{"\nbool "} +
+	    (addNamespace?(namespace_id.empty()?"":(namespace_id + std::string{"::"})):"") +
+	    std::string{"getData( "} +
+	    (namespace_id.empty()?"":(namespace_id + std::string{"::"})) + name +
+	    std::string{"& data )"};
+}
+
+// possible global setter
+static inline std::string globalSetter(const std::string& namespace_id, const std::string& name, bool addNamespace = false)
+{
+    return  std::string{"\nbool "} +
+	    (addNamespace?(namespace_id.empty()?"":(namespace_id + std::string{"::"})):"") +
+	    std::string{"setData( const "} +
+	    (namespace_id.empty()?"":(namespace_id + std::string{"::"})) + name +
+	    std::string{"& data )"};
+}
+
+
+static const std::map<const std::string, const std::string> GET_PROTOTYPE {
+     {"UInt", R"(data.XXX = getUInt(YYY);)"}
+};
+
+static inline std::string getter(const std::string& jsontype, const std::string& name, const std::string& cppFullName)
+{
+	static const std::regex XXX{"XXX"};
+	static const std::regex YYY{"YYY"};
+
+	const auto& found = GET_PROTOTYPE.find(jsontype);
+	if( found != GET_PROTOTYPE.end() ) {
+		return std::regex_replace(std::regex_replace(found->second, XXX, name), YYY, cppFullName);
+	}
+	return std::string{};
+}
+
 /****************************************************************************************/
 /****************************************************************************************/
 /****************************************************************************************/
@@ -475,39 +521,6 @@ return boilerplateOperator(jsonSchema, *this, [this, css_class = jsonSchema.css_
 
 }); // return boilerplateOperator
 } // operator()
-
-// from rapidjson::pointer to c++ const char* friendly name
-static inline std::string pointer2cppFriendly(const std::string& pointer)
-{
-	static const std::regex root{"#"};
-	static const std::regex child{"/"};
-	static const std::string cppFriendly{"_"};
-	return std::regex_replace(std::regex_replace(pointer, root, cppFriendly), child, cppFriendly);
-}
-
-// possible global getter
-static inline std::string globalGetter(const std::string& namespace_id, const std::string& name, bool addNamespace = false)
-{
-    return  std::string{"\nbool "} +
-            (addNamespace?(namespace_id.empty()?"":(namespace_id + std::string{"::"})):"") +
-            std::string{"getData( "} +
-            (namespace_id.empty()?"":(namespace_id + std::string{"::"})) + name +
-            std::string{"& data )"};
-}
-
-// possible global setter
-static inline std::string globalSetter(const std::string& namespace_id, const std::string& name, bool addNamespace = false)
-{
-    return  std::string{"\nbool "} +
-            (addNamespace?(namespace_id.empty()?"":(namespace_id + std::string{"::"})):"") +
-            std::string{"setData( const "} +
-            (namespace_id.empty()?"":(namespace_id + std::string{"::"})) + name +
-            std::string{"& data )"};
-}
-
- static  std::map<std::string, std::regex> GET_PROTOTYPE = {
-
- };
 
 /****************************************************************************************/
 /****************************************************************************************/
@@ -613,7 +626,10 @@ std::string GETTER_SUFIX {"\n} // getter\n"};
 std::string SETTER_PREFIX {globalSetter(jsonSchema.namespace_id, jsonSchema.cpp_global_data_name, true) + std::string{"\n{\n"}};
 std::string SETTER_SUFIX {"\n} // setter\n"};
 
-bool result = boilerplateOperator(jsonSchema, *this, [this, namespace_id = jsonSchema.namespace_id](const Properties& properties) {
+bool result = boilerplateOperator(jsonSchema, *this, [	this,
+							namespace_id = jsonSchema.namespace_id,
+							&GETTER_PREFIX
+						      ](const Properties& properties) {
 
   if(properties.size() > 0) {
 
@@ -643,8 +659,12 @@ bool result = boilerplateOperator(jsonSchema, *this, [this, namespace_id = jsonS
 	    if( e.empty() ) { continue; } // required
 
         if( not p.second.description.empty() ) { pointer2static += "\n/// " + p.second.description; }
-	    std::string fullName {e+"/"+name};
-        pointer2static += "\nstatic constexpr const char* const " + pointer2cppFriendly(fullName) + "{\"" + fullName + "\"};";
+	std::string fullName {e+"/"+name};
+	std::string cppFullName {pointer2cppFriendly(fullName)};
+	pointer2static += "\nstatic constexpr const char* const " + cppFullName + "{\"" + fullName + "\"};";
+	std::string getter_call {getter(p.second.jsontype, name, cppFullName)};
+	if( not getter_call.empty() ) { GETTER_PREFIX += getter_call + "\n"; }
+
     }
 
     filtered = pointer2static + filtered;

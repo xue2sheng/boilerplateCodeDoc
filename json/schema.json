@@ -27,7 +27,7 @@
       "type": "array",
       "title": "Impression",
       "cpptype": "std::vector<Impression>",
-      "jsontype": "object",
+      "jsontype": "array of object",
       "items": {
         "type": "object",
         "title": "Impression",
@@ -81,7 +81,7 @@
               "api": {
                 "type": "array",
                 "cpptype": "std::vector<unsigned int>",
-                "jsontype": "object",
+                "jsontype": "VectorUInt",
                 "items": {
                   "type": "integer",
                   "cpptype": "unsigned int"
@@ -109,7 +109,7 @@
               "deals": {
                 "type": "array",
                 "cpptype": "std::vector<Deal>",
-                "jsontype": "object",
+                "jsontype": "array of object",
                 "title": "Deal",
                 "items": {
                   "title": "Deal",
@@ -145,7 +145,7 @@
                     "wseat": {
                       "type": "array",
                       "cpptype": "std::vector<std::string>",
-                      "jsontype": "StringVector",
+                      "jsontype": "VectorString",
                       "items": {
                         "type": "string"
                       }
@@ -224,7 +224,7 @@
           "iframabuster": {
             "type": "array",
             "cpptype": "std::vector<std::string>",
-            "jsontype": "StringVector",
+            "jsontype": "VectorString",
             "items": {
               "type": "string"
             }
