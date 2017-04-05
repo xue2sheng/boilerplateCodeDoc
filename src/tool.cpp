@@ -8,19 +8,49 @@ using namespace boilerplateCodeDoc;
 
 static bool processFilter(const JsonSchema& schema, const std::string& filename, JsonSchemaFilter& filter)
 {
+    // process filter and save result
     bool result = filter(schema);
 
     if( not result ) {
 
+		// if error at filtering, no need to continue
 		std::cout << filter.message << std::endl << std::endl;
 
     } else {
 
 	try {
+		// maybe the target file already exists
+		// in that case, if it already contains the filtered data, no need to overwrite it
+		std::string contents;
+
+		std::ifstream target {filename};
+		if( target.is_open() ) {
+
+		     // allocate all the memory up front
+		     target.seekg(0, std::ios::end);
+		     contents.reserve(target.tellg());
+		     target.seekg(0, std::ios::beg);
+
+		     // read data
+		     contents.assign((std::istreambuf_iterator<char>(target)), std::istreambuf_iterator<char>());
+
+		     // close file
+		     target.close(); // maybe redundant
+		}
+
+		if( contents == filter.filtered ) {
+
+			// no need to continue, target file contains already filtered data
+			return true;
+		}
+
 		std::ofstream filterFile {filename};
 		if(filterFile) {
 
+			// write data
 			filterFile.write(filter.filtered.c_str(), filter.filtered.size());
+
+			// close file
 			filterFile.close(); // maybe redundant
 
 		} else {
@@ -30,7 +60,7 @@ static bool processFilter(const JsonSchema& schema, const std::string& filename,
 
 	} catch(...) {
 		std::cout << "Unexpected exception while writing to " << filename << std::endl;
-		return 1;
+		return false;
 	}
     }
     return result;
